@@ -132,6 +132,7 @@ const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<string>('home');
   const [mousePosition, setMousePosition] = useState<MousePosition>({ x: 0, y: 0 });
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  
 
   useEffect(() => {
     setIsLoaded(true);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Brain, Zap } from 'lucide-react';
-import { RevealWrapper, TextReveal } from '../components/RevealAnimations';
+import { RevealWrapper, TextReveal, StaggeredReveal } from '../components/RevealAnimations';
 import { skills, techIconMapping } from '../data';
 
 interface SkillGroup {
@@ -71,14 +71,15 @@ const Skills: React.FC = () => {
           display:flex; align-items:center;
           border-radius: 12px;
           background:
-            linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0.10)) padding-box, /* bevel halus */
-            #fde047; /* KUNING ASLI */
+            linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0.10)) padding-box; /* bevel halus */
+            /* #fde047; */ /* KUNING ASLI — dipertahankan oleh layer berikut */
           border:1px solid rgba(0,0,0,0.25);
           box-shadow:
             inset 0 1px 0 rgba(255,255,255,0.25),
             inset 0 -6px 12px rgba(0,0,0,0.10),
             0 10px 28px rgba(0,0,0,0.35);
           overflow:hidden;
+          background-color:#fde047;
         }
         .ribbon::before{
           /* pola diagonal sangat tipis agar terasa premium tanpa mengubah warna */
@@ -184,24 +185,50 @@ const Skills: React.FC = () => {
             <TextReveal text="Skills & Expertise" speed={60} triggerOnce={false} threshold={0.3} />
           </h2>
 
-          <p className="text-base sm:text-lg text-slate-300/85 max-w-3xl mx-auto leading-relaxed">
-            A comprehensive toolkit of technologies, languages, and frameworks that power my development journey.
-          </p>
+          <RevealWrapper
+            animation="slideUp"
+            delay={260}
+            triggerOnce={false}
+            threshold={0.3}
+          >
+            <p className="text-base sm:text-lg text-slate-300/85 max-w-3xl mx-auto leading-relaxed">
+              A comprehensive toolkit of technologies, languages, and frameworks that power my development journey.
+            </p>
+          </RevealWrapper>
         </RevealWrapper>
 
-        {/* ===== RIBBON TOP (pause on hover independent) ===== */}
-        <div className="relative mb-10">
+        {/* ===== RIBBON TOP (reveal + pause-on-hover) ===== */}
+        <RevealWrapper
+          animation="slideLeft"
+          delay={120}
+          triggerOnce={false}
+          threshold={0.25}
+          className="relative mb-10"
+        >
           <div className="ribbon group/t1 rounded-xl overflow-hidden">
             <div className="track animate-left group-hover/t1:[animation-play-state:paused]">
               <TapeRow items={tapeItems1} />
               <TapeRow items={tapeItems1} />
             </div>
           </div>
-        </div>
+        </RevealWrapper>
 
-        {/* ===== ICON GRID (tile premium ringan) ===== */}
-        <div className="relative">
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-4 sm:gap-5 lg:gap-6">
+        {/* ===== ICON GRID (staggered reveal ala experience.tsx) ===== */}
+        <RevealWrapper
+          animation="fadeIn"
+          delay={180}
+          triggerOnce={false}
+          threshold={0.2}
+          className="relative"
+        >
+          <StaggeredReveal
+            animation="slideUp"
+            staggerDelay={40}
+            baseDelay={220}
+            triggerOnce={false}
+            threshold={0.2}
+            className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-4 sm:gap-5 lg:gap-6"
+          >
             {allSkillNames.map((name) => {
               const src = getIcon(name);
               return (
@@ -228,20 +255,26 @@ const Skills: React.FC = () => {
                 </div>
               );
             })}
-          </div>
-        </div>
+          </StaggeredReveal>
+        </RevealWrapper>
 
-        {/* ===== RIBBON BOTTOM (pause on hover independent) ===== */}
-        <div className="relative mt-10">
+        {/* ===== RIBBON BOTTOM (reveal + pause-on-hover) ===== */}
+        <RevealWrapper
+          animation="slideRight"
+          delay={140}
+          triggerOnce={false}
+          threshold={0.25}
+          className="relative mt-10"
+        >
           <div className="ribbon group/t2 rounded-xl overflow-hidden">
             <div className="track animate-right group-hover/t2:[animation-play-state:paused]">
               <TapeRow items={tapeItems2} />
               <TapeRow items={tapeItems2} />
             </div>
           </div>
-        </div>
+        </RevealWrapper>
 
-        {/* ===== CTA kecil (warna & font tetap) ===== */}
+        {/* ===== CTA kecil ===== */}
         <RevealWrapper
           animation="fadeIn"
           delay={380}

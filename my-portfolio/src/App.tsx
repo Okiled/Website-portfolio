@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
 import LoadingScreen from './components/LoadingScreen';
 import Navigation from '../src/components/Navigation';
 import ParticleSystem from '../src/components/ParticleSystem';
@@ -77,15 +76,17 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-x-hidden">
       <ParticleSystem />
       
-      {/* Enhanced cursor glow */}
-      <div 
-        className="fixed w-8 h-8 pointer-events-none z-50 mix-blend-screen transition-all duration-300 ease-out"
-        style={{
-          left: mousePosition.x - 16,
-          top: mousePosition.y - 16,
-          background: `radial-gradient(circle, rgba(6, 182, 212, 0.8) 0%, rgba(139, 92, 246, 0.4) 50%, transparent 100%)`
-        }}
-      />
+    {/* Enhanced, no-delay cursor glow */}
+    <div
+      className="fixed w-12 h-12 pointer-events-none z-[9999] mix-blend-screen"
+      style={{
+        transform: `translate3d(${mousePosition.x - 24}px, ${mousePosition.y - 24}px, 0)`,
+        background: `radial-gradient(circle, rgba(6, 182, 212, 0.9) 0%, rgba(139, 92, 246, 0.5) 60%, transparent 100%)`,
+        filter: `blur(8px) drop-shadow(0 0 12px rgba(139, 92, 246, 0.6))`,
+        willChange: "transform"
+      }}
+    />
+
 
       <Navigation 
         activeSection={activeSection}

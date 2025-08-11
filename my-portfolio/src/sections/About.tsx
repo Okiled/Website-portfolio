@@ -139,7 +139,7 @@ const About: React.FC = () => {
                       triggerOnce={false}
                       threshold={0.25}
                     >
-                      {interests.map(({ text, color, icon: Icon }, index) => (
+                      {interests.map(({ text, icon: Icon }) => (
                         <FloatingCard key={text} delay={0}>
                           <div className="group relative bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl p-4 hover:bg-slate-800/50 hover:border-slate-600/50 transition-all duration-300 hover:shadow-lg hover:shadow-slate-900/20">
                             <div className="flex items-center gap-3">

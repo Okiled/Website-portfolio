@@ -1,3 +1,5 @@
+import React from 'react';
+
 export type LucideIcon = React.FC<React.SVGProps<SVGSVGElement>>;
 
 export interface SocialLink {
@@ -22,11 +24,6 @@ export interface Project {
   demo: string;
   tech: string[];
   color: 'cyan' | 'purple' | 'pink';
-  stats: {
-    views: number;
-    likes: number;
-    comments: number;
-  };
 }
 
 export interface Skill {
@@ -36,7 +33,6 @@ export interface Skill {
   color: 'cyan' | 'purple' | 'pink';
   description: string; 
 }
-
 
 export interface Particle {
   x: number;
@@ -54,3 +50,27 @@ export interface MousePosition {
 }
 
 export type ColorVariant = 'cyan' | 'purple' | 'pink';
+
+// Additional interfaces for project details
+export interface ProjectLinks {
+  github: string;
+  githubApi?: string;
+  demo: string;
+}
+
+export interface ProjectPerformance {
+  "Total Return": string;
+  "Benchmark": string;
+  "Sharpe Ratio": string;
+  "Max Drawdown": string;
+  "Win Rate": string;
+  "RMSE": string;
+}
+
+export interface ProjectDetails {
+  fullDescription: string;
+  features: string[];
+  installation: string[];
+  links: ProjectLinks;
+  performance?: ProjectPerformance;
+}

@@ -56,7 +56,7 @@ const Contact: React.FC = () => {
             threshold={0.25}
           >
             <FloatingCard delay={0}>
-              <div className="group relative bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 hover:bg-slate-800/50 hover:border-slate-600/50 transition-all duration-500 hover:shadow-2xl hover:shadow-slate-900/20">
+              <div className="group relative bg-slate-900/50 border border-slate-700/50 rounded-2xl p-8 hover:bg-slate-800/50 hover:border-slate-600/50 transition-all duration-500 hover:shadow-2xl hover:shadow-slate-900/20">
                 
                 {/* Icon Header */}
                 <div className="flex items-center justify-center mb-6">
@@ -98,7 +98,7 @@ const Contact: React.FC = () => {
                           <Mail className="w-4 h-4 text-slate-500 group-hover/item:text-slate-400 transition-colors duration-300" />
                         </div>
                         <div>
-                          <p className="text-slate-300 group-hover/item:text-slate-200 transition-colors duration-300 text-sm">
+                          <p className="text-l text-slate-200 group-hover/item:text-slate-200 transition-colors duration-300 text-sm">
                             hartonodeliko@gmail.com
                           </p>
                         </div>
@@ -109,7 +109,7 @@ const Contact: React.FC = () => {
                           <Globe className="w-4 h-4 text-slate-500 group-hover/item:text-slate-400 transition-colors duration-300" />
                         </div>
                         <div>
-                          <p className="text-slate-300 group-hover/item:text-slate-200 transition-colors duration-300 text-sm">
+                          <p className="text-slate-200 group-hover/item:text-slate-200 transition-colors duration-300 text-sm">
                             Jakarta, Indonesia
                           </p>
                         </div>

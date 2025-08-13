@@ -7,16 +7,16 @@ import { experiences } from '../data';
 const Experience: React.FC = () => {
   return (
     <section id="experience" className="py-24 relative overflow-hidden">
-      {/* Background Elements */}
+      {/* Background Elements (match About.tsx) */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(120,119,198,0.05),transparent_50%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.02),transparent_50%)]" />
-      
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.08),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,255,255,0.03),transparent_50%)]" />
+
       <div className="container mx-auto px-6 relative z-10">
         {/* Section Header */}
-        <RevealWrapper 
-          animation="fadeIn" 
-          delay={100} 
+        <RevealWrapper
+          animation="fadeIn"
+          delay={100}
           className="text-center mb-20"
           triggerOnce={false}
           threshold={0.3}
@@ -25,18 +25,18 @@ const Experience: React.FC = () => {
             <Calendar className="w-4 h-4 text-slate-400" />
             <span className="text-sm font-medium text-slate-400">Career Journey</span>
           </div>
-          
+
           <h2 className="text-5xl font-bold text-white mb-4">
-            <TextReveal 
-              text="Professional Experience" 
-              speed={60} 
+            <TextReveal
+              text="Professional Experience"
+              speed={60}
               triggerOnce={false}
               threshold={0.3}
             />
           </h2>
-          
-          <RevealWrapper 
-            animation="slideUp" 
+
+          <RevealWrapper
+            animation="slideUp"
             delay={300}
             triggerOnce={false}
             threshold={0.3}
@@ -51,10 +51,10 @@ const Experience: React.FC = () => {
         <div className="max-w-6xl mx-auto">
           <div className="relative">
             {/* Main Timeline Line */}
-            <RevealWrapper 
-              animation="scaleIn" 
+            <RevealWrapper
+              animation="scaleIn"
               delay={500}
-              className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-slate-600 via-slate-500 to-slate-600 hidden md:block"
+              className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-slate-600 via-slate-600 to-slate-600 hidden md:block"
               style={{ transformOrigin: 'top' }}
               triggerOnce={false}
               threshold={0.2}
@@ -88,16 +88,16 @@ const Experience: React.FC = () => {
                           {/* Card Header */}
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                             <div className="flex items-center gap-4">
-                              <RevealWrapper 
-                                animation="rotateIn" 
+                              <RevealWrapper
+                                animation="rotateIn"
                                 delay={700 + (index * 150)}
-                                className={`p-3 bg-gradient-to-r from-slate-700 to-slate-600 rounded-xl shadow-lg group-hover:shadow-slate-600/20 transition-all duration-300`}
+                                className="p-3 bg-gradient-to-r from-slate-700 to-slate-600 rounded-xl shadow-lg group-hover:shadow-slate-600/20 transition-all duration-300"
                                 triggerOnce={false}
                                 threshold={0.25}
                               >
                                 <exp.icon className="w-6 h-6 text-white" />
                               </RevealWrapper>
-                              
+
                               <div>
                                 <h3 className="text-2xl font-bold text-white group-hover:text-slate-200 transition-colors duration-300">
                                   {exp.title}
@@ -105,15 +105,15 @@ const Experience: React.FC = () => {
                                 <p className="text-slate-400 font-medium">{exp.company}</p>
                               </div>
                             </div>
-                            
-                            {/* Period Badge */}
-                            <RevealWrapper 
-                              animation="slideLeft" 
+
+                            {/* Period Badge (match About.tsx badge style) */}
+                            <RevealWrapper
+                              animation="slideLeft"
                               delay={750 + (index * 150)}
                               triggerOnce={false}
                               threshold={0.25}
                             >
-                              <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/60 backdrop-blur-sm border border-slate-600/30 rounded-lg hover:bg-slate-700/60 transition-all duration-300">
+                              <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 backdrop-blur-sm border border-slate-600/30 rounded-lg hover:bg-slate-700/50 transition-all duration-300">
                                 <div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse" />
                                 <span className="text-sm font-medium text-slate-300">{exp.period}</span>
                               </div>
@@ -145,7 +145,7 @@ const Experience: React.FC = () => {
 
                           {/* Bottom Accent Line */}
                           <div className="mt-8 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                          
+
                           {/* Subtle Glow Effect */}
                           <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-slate-600/5 to-slate-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                         </div>
@@ -157,8 +157,8 @@ const Experience: React.FC = () => {
             </div>
 
             {/* Timeline End Indicator */}
-            <RevealWrapper 
-              animation="scaleIn" 
+            <RevealWrapper
+              animation="scaleIn"
               delay={800 + (experiences.length * 150)}
               className="flex justify-center mt-16"
               triggerOnce={false}
@@ -179,8 +179,8 @@ const Experience: React.FC = () => {
         </div>
 
         {/* Bottom Section */}
-        <RevealWrapper 
-          animation="fadeIn" 
+        <RevealWrapper
+          animation="fadeIn"
           delay={1000 + (experiences.length * 150)}
           className="text-center mt-20"
           triggerOnce={false}

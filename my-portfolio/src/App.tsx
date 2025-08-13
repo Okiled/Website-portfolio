@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import LoadingScreen from './components/LoadingScreen';
 import Navigation from '../src/components/Navigation';
-import ParticleSystem from '../src/components/ParticleSystem';
 import HeroSection from './sections/HeroSection';
 import AboutSection from './sections/About';
 import ExperienceSection from './sections/Experience';
@@ -74,7 +73,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-x-hidden">
-      <ParticleSystem />
       
     {/* Enhanced, no-delay cursor glow */}
     <div

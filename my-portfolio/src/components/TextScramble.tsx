@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 
 interface TextScrambleProps {
   text: string;
@@ -6,22 +6,22 @@ interface TextScrambleProps {
   delay?: number;
 }
 
-const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
 
 const TextScramble: React.FC<TextScrambleProps> = ({
   text,
-  className = '',
+  className = "",
   delay = 250,
 }) => {
-  const [displayChars, setDisplayChars] = useState<string[]>(text.split(''));
-  const intervalsRef = useRef<Array<NodeJS.Timeout | null>>([]);
-  const timeoutsRef = useRef<Array<NodeJS.Timeout | null>>([]);
+  const [displayChars, setDisplayChars] = useState<string[]>(text.split(""));
+  const intervalsRef = useRef<Array<ReturnType<typeof setInterval> | null>>([]);
+  const timeoutsRef = useRef<Array<ReturnType<typeof setTimeout> | null>>([]);
 
   // Reset if text prop berubah
   useEffect(() => {
-    setDisplayChars(text.split(''));
-    intervalsRef.current.forEach(intv => intv && clearInterval(intv));
-    timeoutsRef.current.forEach(tmo => tmo && clearTimeout(tmo));
+    setDisplayChars(text.split(""));
+    intervalsRef.current.forEach((intv) => intv && clearInterval(intv));
+    timeoutsRef.current.forEach((tmo) => tmo && clearTimeout(tmo));
     intervalsRef.current = [];
     timeoutsRef.current = [];
   }, [text]);
@@ -33,11 +33,10 @@ const TextScramble: React.FC<TextScrambleProps> = ({
     // Sudah scramble, skip
     if (intervalsRef.current[index]) return;
     intervalsRef.current[index] = setInterval(() => {
-      setDisplayChars(prev => {
+      setDisplayChars((prev) => {
         const newChars = [...prev];
-        if (text[index] !== ' ') {
-          newChars[index] =
-            letters[Math.floor(Math.random() * letters.length)];
+        if (text[index] !== " ") {
+          newChars[index] = letters[Math.floor(Math.random() * letters.length)];
         }
         return newChars;
       });
@@ -50,7 +49,7 @@ const TextScramble: React.FC<TextScrambleProps> = ({
       intervalsRef.current[index] = null;
     }
     timeoutsRef.current[index] = setTimeout(() => {
-      setDisplayChars(prev => {
+      setDisplayChars((prev) => {
         const newChars = [...prev];
         newChars[index] = text[index];
         return newChars;
@@ -62,26 +61,26 @@ const TextScramble: React.FC<TextScrambleProps> = ({
   // Cleanup saat unmount
   useEffect(() => {
     return () => {
-      intervalsRef.current.forEach(intv => intv && clearInterval(intv));
-      timeoutsRef.current.forEach(tmo => tmo && clearTimeout(tmo));
+      intervalsRef.current.forEach((intv) => intv && clearInterval(intv));
+      timeoutsRef.current.forEach((tmo) => tmo && clearTimeout(tmo));
     };
   }, []);
 
   return (
-    <span className={className} style={{ userSelect: 'none' }}>
+    <span className={className} style={{ userSelect: "none" }}>
       {displayChars.map((char, index) => (
         <span
           key={index}
           className={`inline-block transition-all duration-200 ${
-            char === ' ' ? 'w-4' : 'hover:scale-125 hover:text-pink-400 mx-1'
+            char === " " ? "w-4" : "hover:scale-125 hover:text-pink-400 mx-1"
           }`}
           style={{
-            minWidth: char === ' ' ? '1rem' : '0.8rem',
-            textAlign: 'center',
+            minWidth: char === " " ? "1rem" : "0.8rem",
+            textAlign: "center",
             textShadow: intervalsRef.current[index]
-              ? '0 0 10px currentColor'
-              : 'none',
-            cursor: 'pointer',
+              ? "0 0 10px currentColor"
+              : "none",
+            cursor: "pointer",
           }}
           onMouseEnter={() => handleMouseEnter(index)}
           onMouseLeave={() => handleMouseLeave(index)}

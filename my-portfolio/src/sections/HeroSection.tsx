@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { Github, Linkedin, Mail, ChevronDown, MapPin, Download } from "lucide-react";
 import FloatingCard from "../components/FloatingCard";
-import TextScramble from "../components/TextScramble";
-import { RevealWrapper, StaggeredReveal } from "../components/RevealAnimations";
-import CosmicParticles from "../components/CosmicParticles";
+import TextScramble from "../animations/TextScramble";
+import { RevealWrapper, StaggeredReveal } from "../animations/RevealAnimations";
+import CosmicParticles from "../animations/CosmicParticles";
 
 interface HeroSectionProps {
   scrollY: number;

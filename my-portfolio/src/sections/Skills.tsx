@@ -1,7 +1,7 @@
 import React from 'react';
 import { Brain, Zap } from 'lucide-react';
-import { RevealWrapper, TextReveal, StaggeredReveal } from '../components/RevealAnimations';
-import { skills, techIconMapping } from '../data';
+import { RevealWrapper, TextReveal, StaggeredReveal } from '../animations/RevealAnimations';
+import { skills, techIconMapping } from '../utils/data';
 
 interface SkillGroup {
   title: string;

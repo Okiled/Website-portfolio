@@ -12,7 +12,7 @@ import {
   BarChart3 
 } from 'lucide-react';
 
-import type { Experience, Project, Skill, SocialLink, ProjectDetails } from './types';
+import type { Experience, Project, Skill, SocialLink, ProjectDetails } from '../types';
 
 // Technology Icon Mapping
 const techIconMapping: Record<string, string> = {

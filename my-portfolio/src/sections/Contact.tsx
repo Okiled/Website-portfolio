@@ -1,7 +1,7 @@
 import React from "react";
 import { Github, Linkedin, Mail, Globe, Zap, ArrowRight, Send } from "lucide-react";
 import FloatingCard from "../components/FloatingCard";
-import { RevealWrapper, TextReveal, StaggeredReveal } from "../components/RevealAnimations";
+import { RevealWrapper, TextReveal, StaggeredReveal } from "../animations/RevealAnimations";
 
 const Contact: React.FC = () => {
   return (

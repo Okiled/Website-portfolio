@@ -6,7 +6,7 @@ interface TextScrambleProps {
   delay?: number;
 }
 
-const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%^&*";
 
 const TextScramble: React.FC<TextScrambleProps> = ({
   text,

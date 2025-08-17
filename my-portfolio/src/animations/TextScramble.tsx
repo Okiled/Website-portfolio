@@ -72,7 +72,7 @@ const TextScramble: React.FC<TextScrambleProps> = ({
         <span
           key={index}
           className={`inline-block transition-all duration-200 ${
-            char === " " ? "w-4" : "hover:scale-125 hover:text-pink-400 mx-1"
+            char === " " ? "w-4" : "hover:scale-125 hover:text-blue-400 mx-1"
           }`}
           style={{
             minWidth: char === " " ? "1rem" : "0.8rem",

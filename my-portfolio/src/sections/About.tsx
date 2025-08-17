@@ -120,43 +120,6 @@ const About: React.FC = () => {
                   </div>
                 </FloatingCard>
               </RevealWrapper>
-              
-              {/* Interests/Skills */}
-              <RevealWrapper 
-                animation="slideUp" 
-                delay={700}
-                triggerOnce={false}
-                threshold={0.25}
-              >
-                <div className="space-y-4 sm:space-y-6">
-                  <h3 className="text-xl sm:text-2xl font-bold text-white px-1">Areas of Interest</h3>
-                  <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                    <StaggeredReveal
-                      staggerDelay={100}
-                      animation="slideUp"
-                      baseDelay={800}
-                      className="contents"
-                      triggerOnce={false}
-                      threshold={0.25}
-                    >
-                      {interests.map(({ text, icon: Icon }) => (
-                        <FloatingCard key={text} delay={0}>
-                          <div className="group relative bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-lg sm:rounded-xl p-3 sm:p-4 hover:bg-slate-800/50 hover:border-slate-600/50 transition-all duration-300 hover:shadow-lg hover:shadow-slate-900/20">
-                            <div className="flex items-center gap-2 sm:gap-3">
-                              <div className="p-1.5 sm:p-2 bg-gradient-to-r from-slate-700 to-slate-600 rounded-md sm:rounded-lg group-hover:shadow-slate-600/20 transition-all duration-300 flex-shrink-0">
-                                <Icon className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                              </div>
-                              <span className="text-slate-300 font-medium group-hover:text-slate-200 transition-colors duration-300 text-sm sm:text-base">
-                                {text}
-                              </span>
-                            </div>
-                          </div>
-                        </FloatingCard>
-                      ))}
-                    </StaggeredReveal>
-                  </div>
-                </div>
-              </RevealWrapper>
             </div>
             
             {/* Right Column - Education */}

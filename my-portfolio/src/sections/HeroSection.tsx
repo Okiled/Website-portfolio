@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { Github, Linkedin, Mail, ChevronDown, MapPin, Download } from "lucide-react";
-import FloatingCard from "../components/FloatingCard";
 import TextScramble from "../animations/TextScramble";
 import { RevealWrapper, StaggeredReveal } from "../animations/RevealAnimations";
-import CosmicParticles from "../animations/CosmicParticles";
+
+const ChromeGridLazy = React.lazy(() => import("../animations/ChromeGrid"));
 
 interface HeroSectionProps {
   scrollY: number;
@@ -25,51 +25,54 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
     []
   );
 
-  const rafId = useRef<number | null>(null);
-  const lastDetail = useRef<{ x: number; y: number; px: number; py: number; w: number; h: number } | null>(null);
-
-  const onMouseMove = (e: React.MouseEvent) => {
-    const el = e.currentTarget as HTMLElement;
-    const r = el.getBoundingClientRect();
-    const detail = {
-      x: (e.clientX - r.left) / r.width,
-      y: (e.clientY - r.top) / r.height,
-      px: e.clientX,
-      py: e.clientY,
-      w: r.width,
-      h: r.height,
-    };
-    lastDetail.current = detail;
-    if (rafId.current == null) {
-      rafId.current = requestAnimationFrame(() => {
-        if (lastDetail.current) {
-          window.dispatchEvent(new CustomEvent("cosmic:move", { detail: lastDetail.current }));
-        }
-        rafId.current = null;
-      });
-    }
-  };
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const [visible, setVisible] = useState(false);
+  const [gridReady, setGridReady] = useState(false);
 
   useEffect(() => {
-    return () => {
-      if (rafId.current) cancelAnimationFrame(rafId.current);
-    };
+    const el = sectionRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([e]) => setVisible(e.isIntersecting),
+      { threshold: 0.1, rootMargin: "0px 0px -15% 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const ric = (window as any).requestIdleCallback || ((fn: any) => setTimeout(fn, 120));
+    const cic = (window as any).cancelIdleCallback || clearTimeout;
+    const id = ric(() => setGridReady(true));
+    return () => cic(id);
   }, []);
 
   return (
     <section
       id="home"
-      className="min-h-screen flex items-center justify-center relative overflow-hidden isolate"
-      onMouseMove={onMouseMove}
+      ref={sectionRef}
+      className="min-h-screen flex items-center justify-center relative overflow-hidden isolate [content-visibility:auto] [contain-intrinsic-size:900px]"
+      data-visible={visible}
     >
+      <style>{`
+        [data-visible="false"] .parallax-layer{opacity:.999;transform:none}
+        @media (prefers-reduced-motion: reduce){
+          .parallax-layer{transform:none!important}
+        }
+      `}</style>
+
       <div className="absolute inset-0 z-0">
-        <CosmicParticles />
+        {gridReady && visible && (
+          <Suspense fallback={null}>
+            <ChromeGridLazy />
+          </Suspense>
+        )}
       </div>
 
       <div
-        className="absolute inset-0 z-20 pointer-events-none will-change-transform will-change-opacity"
+        className="absolute inset-0 z-20 pointer-events-none will-change-transform will-change-opacity parallax-layer"
         style={{
-          transform: `translate3d(0, ${scrollY * 0.1}px, 0)`,
+          transform: `translate3d(0, ${visible ? scrollY * 0.1 : 0}px, 0)`,
           background:
             "radial-gradient(circle at 30% 20%, rgba(120,119,198,0.06), transparent 55%), radial-gradient(circle at 70% 80%, rgba(255,255,255,0.02), transparent 60%), linear-gradient(135deg, rgba(2,6,23,0.6), rgba(2,6,23,0.0) 40%, rgba(2,6,23,0.6))",
         }}
@@ -105,9 +108,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
               <span>Passionate about</span>
               {specialties.map((specialty, index) => (
                 <React.Fragment key={specialty}>
-                  <span
-                    className={`font-semibold ${index === 1 ? "text-slate-100 drop-shadow-lg" : "text-white drop-shadow-lg"}`}
-                  >
+                  <span className={`font-semibold ${index === 1 ? "text-slate-100 drop-shadow-lg" : "text-white drop-shadow-lg"}`}>
                     {specialty}
                   </span>
                   {index < specialties.length - 1 && <span className="text-slate-500">•</span>}

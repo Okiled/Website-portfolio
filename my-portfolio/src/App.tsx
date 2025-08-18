@@ -1,68 +1,73 @@
 import React, { useState, useEffect } from 'react';
-import LoadingScreen from './components/LoadingScreen';
+import LoadingScreen from '../src/components/LoadingScreen';
 import Navigation from '../src/components/Navigation';
-import HeroSection from './sections/HeroSection';
-import AboutSection from './sections/About';
-import ExperienceSection from './sections/Experience';
-import ProjectsSection from './sections/Projects';
-import SkillsSection from './sections/Skills';
-import ContactSection from './sections/Contact';
+import HeroSection from '../src/sections/HeroSection';
+import AboutSection from '../src/sections/About';
+import ExperienceSection from '../src/sections/Experience';
+import ProjectsSection from '../src/sections/Projects';
+import SkillsSection from '../src/sections/Skills';
+import ContactSection from '../src/sections/Contact';
 import Footer from '../src/components/Footer';
-
-interface MousePosition {
-  x: number;
-  y: number;
-}
+import SplashCursor from '../src/animations/SplashCursor';
 
 const App: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
-  const [activeSection, setActiveSection] = useState<string>('home');
-  const [mousePosition, setMousePosition] = useState<MousePosition>({ x: 0, y: 0 });
-  const [isLoaded, setIsLoaded] = useState<boolean>(false);
-  const [showLoading, setShowLoading] = useState<boolean>(true);
-  const [scrollY, setScrollY] = useState<number>(0);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('home');
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [showLoading, setShowLoading] = useState(true);
+  const [scrollY, setScrollY] = useState(0);
 
-  const handleLoadingComplete = (): void => {
+  const handleLoadingComplete = () => {
     setShowLoading(false);
     setIsLoaded(true);
   };
 
   useEffect(() => {
     if (!showLoading) {
-      const handleScroll = (): void => {
-        setScrollY(window.scrollY);
-        const sections = ['home', 'about', 'experience', 'projects', 'skills', 'contact'];
-        const scrollPosition = window.scrollY + 100;
+      let ticking = false;
 
-        for (const section of sections) {
-          const element = document.getElementById(section);
-          if (element) {
-            const offsetTop = element.offsetTop;
-            const offsetHeight = element.offsetHeight;
-            
-            if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
-              setActiveSection(section);
-              break;
+      const handleScroll = () => {
+        const y = window.scrollY;
+
+        if (!ticking) {
+          window.requestAnimationFrame(() => {
+            setScrollY(y);
+
+            const sections = ['home', 'about', 'experience', 'projects', 'skills', 'contact'];
+            const scrollPosition = y + 100;
+
+            for (const section of sections) {
+              const element = document.getElementById(section);
+              if (element) {
+                const offsetTop = element.offsetTop;
+                const offsetHeight = element.offsetHeight;
+
+                if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+                  setActiveSection(section);
+                  break;
+                }
+              }
             }
-          }
+
+            ticking = false;
+          });
+
+          ticking = true;
         }
       };
 
-      const handleMouseMove = (e: MouseEvent): void => {
-        setMousePosition({ x: e.clientX, y: e.clientY });
-      };
+      window.addEventListener('scroll', handleScroll, { passive: true });
 
-      window.addEventListener('scroll', handleScroll);
-      window.addEventListener('mousemove', handleMouseMove);
-      
+      // initial compute
+      handleScroll();
+
       return () => {
         window.removeEventListener('scroll', handleScroll);
-        window.removeEventListener('mousemove', handleMouseMove);
       };
     }
   }, [showLoading]);
 
-  const scrollToSection = (sectionId: string): void => {
+  const scrollToSection = (sectionId: string) => {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
     setIsMenuOpen(false);
   };
@@ -72,21 +77,15 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-x-hidden">
-      
-    {/* Enhanced, no-delay cursor glow */}
-    <div
-      className="fixed w-12 h-12 pointer-events-none z-[9999] mix-blend-screen"
-      style={{
-        transform: `translate3d(${mousePosition.x - 24}px, ${mousePosition.y - 24}px, 0)`,
-        background: `radial-gradient(circle, rgba(6, 182, 212, 0.9) 0%, rgba(139, 92, 246, 0.5) 60%, transparent 100%)`,
-        filter: `blur(8px) drop-shadow(0 0 12px rgba(139, 92, 246, 0.6))`,
-        willChange: "transform"
-      }}
-    />
+    <div className="min-h-screen relative overflow-x-hidden">
+      <div
+        className="fixed inset-0 pointer-events-none z-[9999]"
+        aria-hidden="true"
+      >
+        <SplashCursor />
+      </div>
 
-
-      <Navigation 
+      <Navigation
         activeSection={activeSection}
         isMenuOpen={isMenuOpen}
         setIsMenuOpen={setIsMenuOpen}
@@ -100,13 +99,11 @@ const App: React.FC = () => {
       <ProjectsSection />
       <SkillsSection />
       <ContactSection />
-      <Footer 
-      activeSection={activeSection} 
-      scrollToSection={scrollToSection} 
+
+      <Footer
+        activeSection={activeSection}
+        scrollToSection={scrollToSection}
       />
-
-
-
     </div>
   );
 };

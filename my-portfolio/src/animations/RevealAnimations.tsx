@@ -1,5 +1,4 @@
-// components/RevealAnimations.tsx
-import React from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 
 interface RevealWrapperProps {
@@ -13,7 +12,21 @@ interface RevealWrapperProps {
   triggerOnce?: boolean;
 }
 
-export const RevealWrapper: React.FC<RevealWrapperProps> = ({
+const ANIMATION_CLASSES = {
+  base: 'transition-all ease-out transform',
+  visible: 'opacity-100 translate-y-0 translate-x-0 scale-100 rotate-0',
+  hidden: {
+    fadeIn: 'opacity-0',
+    slideUp: 'opacity-0 translate-y-8',
+    slideDown: 'opacity-0 -translate-y-8',
+    slideLeft: 'opacity-0 translate-x-8',
+    slideRight: 'opacity-0 -translate-x-8',
+    scaleIn: 'opacity-0 scale-95',
+    rotateIn: 'opacity-0 rotate-3 scale-95'
+  }
+} as const;
+
+export const RevealWrapper = memo<RevealWrapperProps>(({
   children,
   animation = 'fadeIn',
   delay = 0,
@@ -29,43 +42,28 @@ export const RevealWrapper: React.FC<RevealWrapperProps> = ({
     threshold 
   });
 
-  const getAnimationClasses = () => {
-    const baseClasses = `transition-all ease-out duration-[${duration}ms]`;
+  const computedClassName = useMemo(() => {
+    const durationClass = `duration-[${duration}ms]`;
+    const animationClass = isVisible 
+      ? ANIMATION_CLASSES.visible 
+      : ANIMATION_CLASSES.hidden[animation];
     
-    if (!isVisible) {
-      switch (animation) {
-        case 'slideUp':
-          return `${baseClasses} opacity-0 translate-y-8 transform`;
-        case 'slideDown':
-          return `${baseClasses} opacity-0 -translate-y-8 transform`;
-        case 'slideLeft':
-          return `${baseClasses} opacity-0 translate-x-8 transform`;
-        case 'slideRight':
-          return `${baseClasses} opacity-0 -translate-x-8 transform`;
-        case 'scaleIn':
-          return `${baseClasses} opacity-0 scale-95 transform`;
-        case 'rotateIn':
-          return `${baseClasses} opacity-0 rotate-3 scale-95 transform`;
-        default: // fadeIn
-          return `${baseClasses} opacity-0`;
-      }
-    }
-    
-    return `${baseClasses} opacity-100 translate-y-0 translate-x-0 scale-100 rotate-0 transform`;
-  };
+    return `${ANIMATION_CLASSES.base} ${durationClass} ${animationClass} ${className}`;
+  }, [isVisible, animation, duration, className]);
 
   return (
     <div
       ref={elementRef as React.RefObject<HTMLDivElement>}
-      className={`${getAnimationClasses()} ${className}`}
+      className={computedClassName}
       style={style}
     >
       {children}
     </div>
   );
-};
+});
 
-// Component untuk staggered animations
+RevealWrapper.displayName = 'RevealWrapper';
+
 interface StaggeredRevealProps {
   children: React.ReactNode;
   animation?: 'fadeIn' | 'slideUp' | 'slideDown' | 'slideLeft' | 'slideRight' | 'rotateIn' | 'scaleIn';
@@ -76,7 +74,7 @@ interface StaggeredRevealProps {
   threshold?: number;
 }
 
-export const StaggeredReveal: React.FC<StaggeredRevealProps> = ({
+export const StaggeredReveal = memo<StaggeredRevealProps>(({
   children,
   animation = 'slideUp',
   staggerDelay = 100,
@@ -85,28 +83,30 @@ export const StaggeredReveal: React.FC<StaggeredRevealProps> = ({
   triggerOnce = true,
   threshold = 0.1
 }) => {
-  // Convert children to array if it's not already
-  const childrenArray = React.Children.toArray(children);
+  const childrenArray = useMemo(() => React.Children.toArray(children), [children]);
+
+  const renderChild = useCallback((child: React.ReactNode, index: number) => (
+    <RevealWrapper
+      key={index}
+      animation={animation}
+      delay={baseDelay + (index * staggerDelay)}
+      duration={400}
+      triggerOnce={triggerOnce}
+      threshold={threshold}
+    >
+      {child}
+    </RevealWrapper>
+  ), [animation, baseDelay, staggerDelay, triggerOnce, threshold]);
 
   return (
     <div className={className}>
-      {childrenArray.map((child, index) => (
-        <RevealWrapper
-          key={index}
-          animation={animation}
-          delay={baseDelay + (index * staggerDelay)}
-          duration={400}
-          triggerOnce={triggerOnce}
-          threshold={threshold}
-        >
-          {child}
-        </RevealWrapper>
-      ))}
+      {childrenArray.map(renderChild)}
     </div>
   );
-};
+});
 
-// Text reveal component dengan typewriter effect
+StaggeredReveal.displayName = 'StaggeredReveal';
+
 interface TextRevealProps {
   text: string;
   delay?: number;
@@ -117,7 +117,7 @@ interface TextRevealProps {
   threshold?: number;
 }
 
-export const TextReveal: React.FC<TextRevealProps> = ({
+export const TextReveal = memo<TextRevealProps>(({
   text,
   delay = 0,
   speed = 50,
@@ -136,7 +136,6 @@ export const TextReveal: React.FC<TextRevealProps> = ({
 
   React.useEffect(() => {
     if (!isVisible) {
-      // Reset text when not visible (untuk unreveal effect)
       if (!triggerOnce) {
         setDisplayedText('');
         setIsComplete(false);
@@ -147,8 +146,7 @@ export const TextReveal: React.FC<TextRevealProps> = ({
     let currentIndex = 0;
     const interval = setInterval(() => {
       if (currentIndex <= text.length) {
-        setDisplayedText(text.slice(0, currentIndex));
-        currentIndex++;
+        setDisplayedText(text.slice(0, currentIndex++));
       } else {
         setIsComplete(true);
         clearInterval(interval);
@@ -169,4 +167,6 @@ export const TextReveal: React.FC<TextRevealProps> = ({
       )}
     </span>
   );
-};
+});
+
+TextReveal.displayName = 'TextReveal';

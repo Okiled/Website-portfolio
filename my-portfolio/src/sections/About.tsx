@@ -1,166 +1,198 @@
-import React from 'react';
-import { BookOpen, Star, User, GraduationCap, Code2 } from 'lucide-react';
-import FloatingCard from '../components/FloatingCard';
-import { RevealWrapper, TextReveal, StaggeredReveal } from '../animations/RevealAnimations';
+import React, { memo } from "react";
+import { BookOpen, Star, User, GraduationCap, Code2 } from "lucide-react";
+import { useGlowEffect as useGlowEffectHook } from "@/components/GlowEffect";
 
-const About: React.FC = () => {
-  return (
-    // CHANGES: tambah `isolate` agar stacking context section terpisah dari canvas global
-    <section id="about" className="py-12 sm:py-16 md:py-20 lg:py-24 relative overflow-hidden isolate">
-      {/* CHANGES: base overlay opak-ish di paling belakang, menenangkan komposit fluid */}
-      <div className="absolute inset-0 -z-20 bg-slate-950" />
+// Memoized sub-components to prevent unnecessary re-renders
+const ProfileBadge = memo(() => (
+  <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-secondary border border-border rounded-full mb-4 sm:mb-6">
+    <User className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
+    <span className="text-xs sm:text-sm font-medium text-foreground">
+      Personal Profile
+    </span>
+  </div>
+));
+ProfileBadge.displayName = 'ProfileBadge';
 
-      {/* CHANGES: semua dekor background dipastikan `-z` dan non-interaktif */}
-      <div className="absolute inset-0 -z-10 pointer-events-none bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
-      <div className="absolute inset-0 -z-10 pointer-events-none bg-[radial-gradient(circle_at_30%_20%,rgba(120,119,198,0.08),transparent_50%)]" />
-      <div className="absolute inset-0 -z-10 pointer-events-none bg-[radial-gradient(circle_at_70%_80%,rgba(255,255,255,0.03),transparent_50%)]" />
+const IntroductionCard = memo(React.forwardRef<HTMLDivElement, { glowProps: any }>(
+  ({ glowProps }, ref) => (
+    <div ref={ref} {...glowProps} className="rounded-2xl">
+      <div className="glow-spots" />
+      <div className="relative z-10 rounded-2xl p-6 md:p-8 bg-card border border-border shadow-[inset_0_1px_0_hsl(var(--foreground)/0.04)]">
+        <div className="flex items-center gap-4 mb-6">
+          <User className="w-6 h-6 text-foreground" />
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">
+            Introduction
+          </h3>
+        </div>
+        <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+          I'm an Information Technology student at Binus University
+          with a passion for AI, quantitative finance, and full-stack
+          development. Currently in my 5th semester with a focus on
+          building innovative solutions that bridge technology and
+          finance.
+        </p>
+      </div>
+    </div>
+  )
+));
+IntroductionCard.displayName = 'IntroductionCard';
 
-      {/* konten tetap di atas */}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <RevealWrapper 
-          animation="fadeIn" 
-          delay={100} 
-          className="text-center mb-12 sm:mb-16 md:mb-20"
-          triggerOnce={false}
-          threshold={0.3}
-        >
-          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-white/5 backdrop-blur-sm border border-white/10 rounded-full mb-4 sm:mb-6">
-            <User className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400" />
-            <span className="text-xs sm:text-sm font-medium text-slate-400">Personal Profile</span>
+const Web3Card = memo(React.forwardRef<HTMLDivElement, { glowProps: any }>(
+  ({ glowProps }, ref) => (
+    <div ref={ref} {...glowProps} className="rounded-2xl">
+      <div className="glow-spots" />
+      <div className="relative z-10 rounded-2xl p-6 md:p-8 bg-card border border-border shadow-[inset_0_1px_0_hsl(var(--foreground)/0.04)]">
+        <div className="flex items-center gap-4 mb-6">
+          <Code2 className="w-6 h-6 text-foreground" />
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">
+            Web3 Journey
+          </h3>
+        </div>
+        <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+          Active in the Web3 ecosystem since 2022, I have extensive
+          experience in blockchain technologies, DeFi protocols, and
+          cryptocurrency trading algorithms. I'm particularly
+          interested in applying AI to financial markets and building
+          decentralized applications.
+        </p>
+      </div>
+    </div>
+  )
+));
+Web3Card.displayName = 'Web3Card';
+
+const EducationCard = memo(React.forwardRef<HTMLDivElement, { glowProps: any }>(
+  ({ glowProps }, ref) => (
+    <div ref={ref} {...glowProps} className="rounded-2xl">
+      <div className="glow-spots" />
+      <div className="relative z-10 rounded-2xl p-6 md:p-8 bg-card border border-border shadow-[inset_0_1px_0_hsl(var(--foreground)/0.04)]">
+        <div className="flex items-center gap-4 mb-8">
+          <BookOpen className="w-6 h-6 text-foreground" />
+          <h3 className="text-xl md:text-2xl font-bold text-foreground">
+            Education
+          </h3>
+        </div>
+
+        <div className="space-y-8">
+          <div className="p-6 rounded-xl border border-border bg-secondary">
+            <div className="flex items-start gap-4 mb-4">
+              <GraduationCap className="w-5 h-5 text-foreground" />
+              <div>
+                <h4 className="text-xl font-semibold text-foreground">
+                  Binus University
+                </h4>
+                <p className="text-muted-foreground text-sm">
+                  Bachelor's in Information Technology
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  Aug 2023 – Expected 2027
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Star className="w-4 h-4 text-muted-foreground" />
+              <span className="text-foreground text-sm">
+                GPA: 3.0/4.0
+              </span>
+            </div>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-bold text-white mb-3 sm:mb-4 px-4">
-            <TextReveal text="About Me" speed={60} triggerOnce={false} threshold={0.3} />
-          </h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center p-4 rounded-xl border border-border bg-secondary">
+              <div className="text-2xl font-bold text-foreground">
+                5th
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                Current Semester
+              </div>
+            </div>
+            <div className="text-center p-4 rounded-xl border border-border bg-secondary">
+              <div className="text-2xl font-bold text-foreground">
+                3.0
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                Current GPA
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+));
+EducationCard.displayName = 'EducationCard';
 
-          <RevealWrapper animation="slideUp" delay={300} triggerOnce={false} threshold={0.3}>
-            <p className="text-base sm:text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed px-4">
-              Passionate about bridging technology and finance through innovative solutions
-            </p>
-          </RevealWrapper>
-        </RevealWrapper>
+const QuoteBadge = memo(() => (
+  <div className="text-center mt-16">
+    <div className="inline-flex items-center gap-2 px-6 py-3 bg-secondary border border-border rounded-full">
+      <span className="text-foreground text-base">
+        "Building the future, one line of code at a time"
+      </span>
+    </div>
+  </div>
+));
+QuoteBadge.displayName = 'QuoteBadge';
+
+// Static background layers memoized to prevent re-creation
+const BackgroundLayers = memo(() => (
+  <>
+    <div className="absolute inset-0 -z-20 bg-background" />
+    <div className="absolute inset-0 -z-10 pointer-events-none bg-[radial-gradient(1200px_600px_at_60%_-10%,hsl(var(--primary)/0.1),transparent_60%)]" />
+    <div className="absolute inset-0 -z-10 pointer-events-none bg-[radial-gradient(800px_500px_at_20%_110%,hsl(var(--primary)/0.08),transparent_60%)]" />
+  </>
+));
+BackgroundLayers.displayName = 'BackgroundLayers';
+
+const About: React.FC = () => {
+  // All glow effects preserved exactly as original
+  const {
+    ref: glow1Ref,
+    glowProps: glow1Props,
+    glowCSS,
+  } = useGlowEffectHook({ glowColor: "blue" });
+  const { ref: glow2Ref, glowProps: glow2Props } = useGlowEffectHook({
+    glowColor: "blue",
+  });
+  const { ref: glow3Ref, glowProps: glow3Props } = useGlowEffectHook({
+    glowColor: "blue",
+  });
+
+  return (
+    <section
+      id="about"
+      className="py-12 sm:py-16 md:py-20 lg:py-24 relative overflow-hidden isolate"
+    >
+      <style dangerouslySetInnerHTML={{ __html: glowCSS }} />
+
+      <BackgroundLayers />
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="text-center mb-12 sm:mb-16 md:mb-20">
+          <ProfileBadge />
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-bold text-foreground mb-3 sm:mb-4 px-4">
+            About Me
+          </h2>
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
+            Passionate about bridging technology and finance through innovative
+            solutions
+          </p>
+        </div>
 
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 md:gap-12 items-start">
             <div className="space-y-6 sm:space-y-8">
-              <RevealWrapper animation="slideUp" delay={400} triggerOnce={false} threshold={0.25}>
-                <FloatingCard delay={0}>
-                  {/* CATATAN: untuk card, tetap gunakan bg dengan alpha (bg-slate-900/50) + backdrop-blur.
-                     Hindari memberi `opacity-*` di wrapper besar agar tidak bikin stacking context global. */}
-                  <div className="group relative bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 hover:bg-slate-800/50 hover:border-slate-600/50 transition-all duration-500 hover:shadow-2xl hover:shadow-slate-900/20">
-                    <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-                      <RevealWrapper animation="rotateIn" delay={500} className="p-2 sm:p-3 bg-gradient-to-r from-slate-700 to-slate-600 rounded-lg sm:rounded-xl shadow-lg group-hover:shadow-slate-600/20 transition-all duration-300 flex-shrink-0" triggerOnce={false} threshold={0.25}>
-                        <User className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
-                      </RevealWrapper>
-                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Introduction</h3>
-                    </div>
-
-                    <p className="text-sm sm:text-base md:text-lg text-slate-300 leading-relaxed group-hover:text-slate-200 transition-colors duration-300">
-                      I'm an Information Technology student at Binus University with a passion for AI, quantitative finance, and full-stack development. Currently in my 5th semester with a focus on building innovative solutions that bridge technology and finance.
-                    </p>
-
-                    <div className="mt-4 sm:mt-6 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  </div>
-                </FloatingCard>
-              </RevealWrapper>
-
-              <RevealWrapper animation="slideUp" delay={550} triggerOnce={false} threshold={0.25}>
-                <FloatingCard delay={100}>
-                  <div className="group relative bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 hover:bg-slate-800/50 hover:border-slate-600/50 transition-all duration-500 hover:shadow-2xl hover:shadow-slate-900/20">
-                    <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-                      <RevealWrapper animation="rotateIn" delay={650} className="p-2 sm:p-3 bg-gradient-to-r from-slate-700 to-slate-600 rounded-lg sm:rounded-xl shadow-lg group-hover:shadow-slate-600/20 transition-all duration-300 flex-shrink-0" triggerOnce={false} threshold={0.25}>
-                        <Code2 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
-                      </RevealWrapper>
-                      <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Web3 Journey</h3>
-                    </div>
-
-                    <p className="text-sm sm:text-base md:text-lg text-slate-300 leading-relaxed group-hover:text-slate-200 transition-colors duration-300">
-                      Active in the Web3 ecosystem since 2022, I have extensive experience in blockchain technologies, DeFi protocols, and cryptocurrency trading algorithms. I'm particularly interested in applying AI to financial markets and building decentralized applications.
-                    </p>
-
-                    <div className="mt-4 sm:mt-6 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  </div>
-                </FloatingCard>
-              </RevealWrapper>
+              <IntroductionCard ref={glow1Ref} glowProps={glow1Props} />
+              <Web3Card ref={glow2Ref} glowProps={glow2Props} />
             </div>
 
-            <RevealWrapper animation="slideUp" delay={600} triggerOnce={false} threshold={0.25}>
-              <FloatingCard delay={200}>
-                <div className="group relative bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 hover:bg-slate-800/50 hover:border-slate-600/50 transition-all duration-500 hover:shadow-2xl hover:shadow-slate-900/20">
-                  <div className="flex items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
-                    <RevealWrapper animation="rotateIn" delay={700} className="p-2 sm:p-3 bg-gradient-to-r from-slate-700 to-slate-600 rounded-lg sm:rounded-xl shadow-lg group-hover:shadow-slate-600/20 transition-all duration-300 flex-shrink-0" triggerOnce={false} threshold={0.25}>
-                      <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
-                    </RevealWrapper>
-                    <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Education</h3>
-                  </div>
-
-                  <RevealWrapper animation="slideUp" delay={800} triggerOnce={false} threshold={0.25}>
-                    <div className="space-y-6 sm:space-y-8">
-                      <div className="group/edu relative p-4 sm:p-6 bg-slate-800/30 rounded-lg sm:rounded-xl hover:bg-slate-800/50 transition-all duration-300 border border-slate-700/30 hover:border-slate-600/50">
-                        <div className="flex items-start gap-3 sm:gap-4 mb-3 sm:mb-4">
-                          <div className="p-1.5 sm:p-2 bg-gradient-to-r from-slate-700 to-slate-600 rounded-md sm:rounded-lg flex-shrink-0">
-                            <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-lg sm:text-xl font-semibold text-white group-hover/edu:text-slate-200 mb-1 sm:mb-2 transition-colors duration-300">
-                              Binus University
-                            </h4>
-                            <p className="text-sm sm:text-base text-slate-300 mb-1">Bachelor's in Information Technology</p>
-                            <p className="text-xs sm:text-sm text-slate-400">Aug 2023 – Expected 2027</p>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            <Star className="w-3 h-3 sm:w-4 sm:h-4 text-slate-400" />
-                            <span className="text-slate-400 text-xs sm:text-sm">GPA: 3.0/4.0</span>
-                          </div>
-                          <div className="flex-1 bg-slate-700/50 rounded-full h-1.5 sm:h-2">
-                            <div className="bg-gradient-to-r from-slate-500 to-slate-400 h-1.5 sm:h-2 rounded-full transition-all duration-1000 ease-out" style={{ width: '75%' }} />
-                          </div>
-                        </div>
-
-                        <div className="h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent opacity-0 group-hover/edu:opacity-100 transition-opacity duration-500" />
-                      </div>
-
-                      <StaggeredReveal
-                        staggerDelay={100}
-                        animation="slideUp"
-                        baseDelay={900}
-                        className="grid grid-cols-2 gap-3 sm:gap-4"
-                        triggerOnce={false}
-                        threshold={0.25}
-                      >
-                        <div className="group/stat relative text-center p-3 sm:p-4 bg-slate-800/30 rounded-lg sm:rounded-xl hover:bg-slate-800/50 transition-all duration-300 border border-slate-700/30 hover:border-slate-600/50">
-                          <div className="text-xl sm:text-2xl font-bold text-slate-200 group-hover/stat:text-white transition-colors duration-300">5th</div>
-                          <div className="text-xs text-slate-400 group-hover/stat:text-slate-300 transition-colors duration-300 mt-1">Current Semester</div>
-                        </div>
-                        <div className="group/stat relative text-center p-3 sm:p-4 bg-slate-800/30 rounded-lg sm:rounded-xl hover:bg-slate-800/50 transition-all duration-300 border border-slate-700/30 hover:border-slate-600/50">
-                          <div className="text-xl sm:text-2xl font-bold text-slate-200 group-hover/stat:text-white transition-colors duration-300">3.0</div>
-                          <div className="text-xs text-slate-400 group-hover/stat:text-slate-300 transition-colors duration-300 mt-1">Current GPA</div>
-                        </div>
-                      </StaggeredReveal>
-                    </div>
-                  </RevealWrapper>
-
-                  <div className="mt-6 sm:mt-8 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-gradient-to-r from-slate-600/5 to-slate-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                </div>
-              </FloatingCard>
-            </RevealWrapper>
+            <EducationCard ref={glow3Ref} glowProps={glow3Props} />
           </div>
         </div>
 
-        <RevealWrapper animation="fadeIn" delay={1000} className="text-center mt-12 sm:mt-16 md:mt-20" triggerOnce={false} threshold={0.3}>
-          <div className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-slate-800/50 backdrop-blur-sm border border-slate-600/30 rounded-full hover:bg-slate-700/50 transition-all duration-300 mx-4">
-            <span className="text-slate-400 text-sm sm:text-base text-center">
-              "Building the future, one line of code at a time"
-            </span>
-          </div>
-        </RevealWrapper>
+        <QuoteBadge />
       </div>
     </section>
   );
 };
 
-export default About;
+export default memo(About);

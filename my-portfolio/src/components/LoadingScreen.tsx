@@ -1,660 +1,983 @@
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import * as THREE from "three";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
-interface LoadingScreenProps {
-  onLoadingComplete: () => void;
-}
+const LOOP = false;
+const TOTAL_LOADING_TIME = 5500;
 
-/* =========================
-   ENHANCED SHADERS
-   ========================= */
+const T = {
+  spreadStep: 60,
+  spreadStartDelay: 80,
+  hexPulse: 500,
+  hexStagger: 30,
+  woosh: 600,
+  wooshBetween: 120,
+  afterAllGlow: 100,
+  beforeWooshBlue: 150,
+  boom: 800,
+  progressTick: 16,
+  startDelay: 50,
+} as const;
 
-const NOISE3D = `
-vec3 mod289(vec3 x) { return x - floor(x * (1.0/289.0)) * 289.0; }
-vec4 mod289(vec4 x) { return x - floor(x * (1.0/289.0)) * 289.0; }
-vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
-vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
-
-float snoise(vec3 v) {
-  const vec2 C = vec2(1.0/6.0, 1.0/3.0);
-  const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
-  vec3 i = floor(v + dot(v, C.yyy));
-  vec3 x0 = v - i + dot(i, C.xxx);
-  vec3 g = step(x0.yzx, x0.xyz);
-  vec3 l = 1.0 - g;
-  vec3 i1 = min(g.xyz, l.zxy);
-  vec3 i2 = max(g.xyz, l.zxy);
-  vec3 x1 = x0 - i1 + C.xxx;
-  vec3 x2 = x0 - i2 + C.yyy;
-  vec3 x3 = x0 - D.yyy;
-  i = mod289(i);
-  vec4 p = permute(permute(permute(
-             i.z + vec4(0.0, i1.z, i2.z, 1.0))
-           + i.y + vec4(0.0, i1.y, i2.y, 1.0))
-           + i.x + vec4(0.0, i1.x, i2.x, 1.0));
-  float n_ = 0.142857142857;
-  vec3 ns = n_ * D.wyz - D.xzx;
-  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
-  vec4 x_ = floor(j * ns.z);
-  vec4 y_ = floor(j - 7.0 * x_);
-  vec4 x = x_ *ns.x + ns.yyyy;
-  vec4 y = y_ *ns.x + ns.yyyy;
-  vec4 h = 1.0 - abs(x) - abs(y);
-  vec4 b0 = vec4(x.xy, y.xy);
-  vec4 b1 = vec4(x.zw, y.zw);
-  vec4 s0 = floor(b0) * 2.0 + 1.0;
-  vec4 s1 = floor(b1) * 2.0 + 1.0;
-  vec4 sh = -step(h, vec4(0.0));
-  vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
-  vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
-  vec3 p0 = vec3(a0.xy, h.x);
-  vec3 p1 = vec3(a0.zw, h.y);
-  vec3 p2 = vec3(a1.xy, h.z);
-  vec3 p3 = vec3(a1.zw, h.w);
-  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
-  p0 *= norm.x;
-  p1 *= norm.y;
-  p2 *= norm.z;
-  p3 *= norm.w;
-  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
-  m = m * m;
-  return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
-}
-
-float fbm(vec3 p) {
-  float value = 0.0;
-  float amplitude = 0.5;
-  float frequency = 1.0;
-  for (int i = 0; i < 6; i++) {
-    value += amplitude * snoise(p * frequency);
-    frequency *= 2.0;
-    amplitude *= 0.5;
-  }
-  return value;
-}
-`;
-
-// Enhanced loading ring with energy field
-const ENHANCED_ICON_FS = `
-precision highp float;
-uniform float uTime;
-uniform float uProgress;
-uniform float uEnergy;
-uniform vec2 uRes;
-
-${NOISE3D}
-
-float sdCircle(vec2 p, float r) {
-  return length(p) - r;
-}
-
-float sdRing(vec2 p, float r, float thickness) {
-  return abs(length(p) - r) - thickness;
-}
-
-vec3 hsv2rgb(vec3 c) {
-  vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-}
-
-void main() {
-  vec2 uv = (gl_FragCoord.xy / uRes) * 2.0 - 1.0;
-  uv.x *= uRes.x / uRes.y;
-  
-  float time = uTime * 0.8;
-  
-  // Dynamic breathing with energy
-  float breath = 0.02 * sin(time * 3.0) * uEnergy;
-  float pulse = 0.01 * sin(time * 8.0) * uProgress;
-  uv *= 1.0 + breath + pulse;
-  
-  // Multi-layer noise displacement
-  vec3 noisePos = vec3(uv * 1.8, time * 0.4);
-  float displacement = fbm(noisePos) * 0.012 * uEnergy;
-  uv += displacement;
-  
-  // Multiple ring layers
-  float mainRing = sdRing(uv, 0.32, 0.008);
-  float innerRing = sdRing(uv, 0.28, 0.004);
-  float outerRing = sdRing(uv, 0.36, 0.006);
-  
-  // Energy field
-  float dist = length(uv);
-  float energyField = smoothstep(0.5, 0.2, dist) * uEnergy * 0.3;
-  
-  // Progressive ring appearance
-  float ringMask = smoothstep(0.98, 0.02, uProgress);
-  
-  // Color transitions
-  float hue = time * 0.1 + dist * 0.8;
-  vec3 energyColor = hsv2rgb(vec3(hue, 0.8, 1.0));
-  
-  // Main ring glow
-  float mainGlow = smoothstep(0.02, 0.0, mainRing) * 2.0;
-  float innerGlow = smoothstep(0.015, 0.0, innerRing) * 1.5;
-  float outerGlow = smoothstep(0.025, 0.0, outerRing) * 1.2;
-  
-  // Combine all elements
-  vec3 col = vec3(0.0);
-  col += vec3(mainGlow) * mix(vec3(1.0), energyColor, 0.3);
-  col += vec3(innerGlow) * energyColor * 0.8;
-  col += vec3(outerGlow) * energyColor * 0.6;
-  col += energyField * energyColor;
-  
-  // Progress-based fade with sophisticated curve
-  float fade = 1.0 - smoothstep(0.75, 1.0, uProgress);
-  fade *= fade; // quadratic falloff
-  
-  // Add subtle noise to prevent banding
-  col += (fbm(vec3(uv * 50.0, time)) * 0.01 - 0.005);
-  
-  gl_FragColor = vec4(col * fade, fade);
-}
-`;
-
-// Enhanced particle system shader
-const PARTICLE_VS = `
-precision highp float;
-attribute vec3 position;
-attribute vec3 velocity;
-attribute float life;
-attribute float size;
-attribute vec3 color;
-uniform float uTime;
-uniform float uProgress;
-uniform mat4 projectionMatrix;
-uniform mat4 modelViewMatrix;
-varying float vLife;
-varying vec3 vColor;
-
-void main() {
-  vec3 pos = position + velocity * uTime * 0.5;
-  
-  // Swirl effect as particles move to center
-  float angle = atan(pos.y, pos.x) + uTime * 2.0 * uProgress;
-  float radius = length(pos.xy) * (1.0 - uProgress * 0.8);
-  pos.x = radius * cos(angle);
-  pos.y = radius * sin(angle);
-  
-  vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-  gl_Position = projectionMatrix * mvPosition;
-  gl_PointSize = size * (300.0 / -mvPosition.z) * (1.0 + uProgress);
-  
-  vLife = life;
-  vColor = color;
-}
-`;
-
-const PARTICLE_FS = `
-precision highp float;
-uniform float uTime;
-varying float vLife;
-varying vec3 vColor;
-
-void main() {
-  vec2 center = gl_PointCoord - 0.5;
-  float dist = length(center);
-  
-  if (dist > 0.5) discard;
-  
-  float alpha = (1.0 - dist * 2.0) * vLife;
-  alpha *= alpha; // smoother falloff
-  
-  // Add sparkle effect
-  float sparkle = sin(uTime * 10.0 + dist * 20.0) * 0.3 + 0.7;
-  
-  gl_FragColor = vec4(vColor * sparkle, alpha);
-}
-`;
-
-// Enhanced wipe with energy dissolution
-const ENHANCED_WIPE_FS = `
-precision highp float;
-uniform float uRadius;
-uniform float uTime;
-uniform vec2 uRes;
-
-${NOISE3D}
-
-void main() {
-  vec2 uv = gl_FragCoord.xy / uRes;
-  vec2 center = uv - 0.5;
-  float dist = length(center);
-  
-  // Add noise to the wipe edge for organic dissolution
-  float noise = fbm(vec3(center * 8.0, uTime)) * 0.02;
-  float adjustedRadius = uRadius + noise;
-  
-  // Smooth transition with energy effect
-  float mask = smoothstep(adjustedRadius - 0.01, adjustedRadius + 0.01, dist);
-  
-  // Add energy rings at the wipe edge
-  float edgeGlow = exp(-abs(dist - adjustedRadius) * 50.0) * 0.3;
-  
-  vec3 col = vec3(edgeGlow);
-  gl_FragColor = vec4(col, mask);
-}
-`;
-
-const FULLSCREEN_VS = `
-precision highp float;
-attribute vec2 position;
-void main() {
-  gl_Position = vec4(position, 0.0, 1.0);
-}
-`;
-
-/* =========================
-   ENHANCED COMPONENTS
-   ========================= */
-
-function useFullscreenQuadMaterial(fragmentShader: string, uniforms: Record<string, any>) {
-  const mat = useMemo(() => {
-    const material = new THREE.RawShaderMaterial({
-      vertexShader: FULLSCREEN_VS,
-      fragmentShader,
-      depthTest: false,
-      depthWrite: false,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      uniforms: Object.fromEntries(
-        Object.entries(uniforms).map(([k, v]) => [k, { value: v }])
-      ),
-    });
-    return material;
-  }, [fragmentShader]);
-  return mat;
-}
-
-// Custom Canvas component without react-three/fiber
-const CustomCanvas: React.FC<{ children: React.ReactNode; className: string }> = ({ children, className }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    // Initialize Three.js
-    const canvas = canvasRef.current;
-    const renderer = new THREE.WebGLRenderer({ 
-      canvas, 
-      antialias: true, 
-      alpha: true,
-      powerPreference: "high-performance"
-    });
-    
-    const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
-    camera.position.set(0, 0, 1);
-
-    renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    rendererRef.current = renderer;
-    sceneRef.current = scene;
-    cameraRef.current = camera;
-
-    const handleResize = () => {
-      if (canvas && renderer && camera) {
-        const width = canvas.offsetWidth;
-        const height = canvas.offsetHeight;
-        renderer.setSize(width, height);
-        camera.left = -width / height;
-        camera.right = width / height;
-        camera.updateProjectionMatrix();
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (renderer) {
-        renderer.dispose();
-      }
-    };
-  }, []);
-
-  return <canvas ref={canvasRef} className={className} />;
+type Params = {
+  strokeWidth: number; fontSize: number; centerR: number; mainLen: number;
+  off1: number; off2: number; branchLen: number; branchAng: number; hexR: number;
+  extLen: number; capR: number; dotR: number; tx: number; ty: number; rot: number; scale: number;
 };
 
-// Simplified 3D visualization without react-three/fiber
-const VisualLoader: React.FC<{ timeline: number; energy: number }> = ({ timeline, energy }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
-  
-  useEffect(() => {
-    if (!canvasRef.current) return;
+const P: Params = {
+  strokeWidth: 6,
+  fontSize: 24,
+  centerR: 20,
+  mainLen: 180,
+  off1: 70,
+  off2: 110,
+  branchLen: 35,
+  branchAng: 45,
+  hexR: 30,
+  extLen: 35,
+  capR: 18,
+  dotR: 6,
+  tx: 0, ty: 0, rot: 29, scale: 0.65,
+};
 
-    const canvas = canvasRef.current;
-    const renderer = new THREE.WebGLRenderer({ 
-      canvas, 
-      antialias: true, 
-      alpha: true 
+const AKAZA_PINK = { stroke: "#FF1493", text: "#FF69B4", fill: "transparent" };
+const AKAZA_BLUE = { stroke: "#00E5FF", text: "#7EF9FF", fill: "transparent" };
+
+const EZ_OUT = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+const EZ_INOUT = "cubic-bezier(0.22, 1, 0.36, 1)";
+const EZ_SMOOTH = "cubic-bezier(0.4, 0.0, 0.2, 1)";
+const EZ_NATURAL = "cubic-bezier(0.15, 0.85, 0.25, 1)";
+
+function mulberry32(seed: number) {
+  return function () {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const rng = mulberry32(1337);
+const r01 = () => rng();
+const rrange = (a: number, b: number) => a + (b - a) * r01();
+const jitter = (factor = 0.15) => 1 + (r01() - 0.5) * (factor * 2);
+const nDur = (ms: number, factor = 0.15) => Math.max(50, Math.round(ms * jitter(factor)));
+const nDelay = (ms: number, factor = 0.2) => Math.max(0, Math.round(ms * jitter(factor)));
+
+const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
+  const [exited, setExited] = useState(false);
+  const [exiting, setExiting] = useState(false);
+
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const layer1Ref = useRef<SVGGElement | null>(null);
+  const layer2Ref = useRef<SVGGElement | null>(null);
+  const centerDotRef = useRef<SVGCircleElement | null>(null);
+
+  const auraRef = useRef<HTMLDivElement | null>(null);
+  const ringRef = useRef<HTMLDivElement | null>(null);
+  const compassRef = useRef<HTMLDivElement | null>(null);
+  const energyFieldRef = useRef<HTMLDivElement | null>(null);
+  const noiseRef = useRef<HTMLDivElement | null>(null);
+
+  const timersRef = useRef<number[]>([]);
+  const animsRef = useRef<Animation[]>([]);
+  const intervalsRef = useRef<number[]>([]);
+
+  const stateRef = useRef({
+    animationElements: [] as Element[],
+    hexElements: [] as Element[],
+    capElements: [] as Element[],
+    theme: "pink" as "pink" | "blue",
+  });
+
+  const speedFactorPink = 0.6;
+  const spd = (d: number) =>
+    stateRef.current.theme === "pink" ? Math.max(30, Math.round(d * speedFactorPink)) : d;
+
+  const rootVars = useMemo<React.CSSProperties>(() => ({
+    ["--stroke-color" as any]: AKAZA_PINK.stroke,
+    ["--fill-color" as any]: AKAZA_PINK.fill,
+    ["--text-color" as any]: AKAZA_PINK.text,
+    ["--glow-pink" as any]: "#FF1493",
+    ["--glow-pink-soft" as any]: "rgba(255,20,147,0.12)",
+    ["--glow-blue" as any]: "#00EAFF",
+    ["--glow-blue-soft" as any]: "rgba(0,234,255,0.15)",
+    ["--akaza-pink" as any]: "#FF1493",
+    ["--akaza-blue" as any]: "#00E5FF",
+  }), []);
+
+  function trackTimer(id: number) { timersRef.current.push(id); }
+  function trackAnim(a: Animation | null) { if (a) animsRef.current.push(a); }
+  function trackInterval(id: number) { intervalsRef.current.push(id); }
+  function clearAllAsync() {
+    timersRef.current.forEach((id) => clearTimeout(id));
+    intervalsRef.current.forEach((id) => clearInterval(id));
+    animsRef.current.forEach((a) => { try { a.cancel(); } catch {} });
+    timersRef.current = [];
+    intervalsRef.current = [];
+    animsRef.current = [];
+    if (noiseRef.current && noiseRef.current.parentNode) noiseRef.current.parentNode.removeChild(noiseRef.current);
+  }
+
+  function scaledParams(base: Params, s: number): Params {
+    return {
+      ...base,
+      mainLen: base.mainLen * s,
+      off1: base.off1 * s,
+      off2: base.off2 * s,
+      branchLen: base.branchLen * s,
+      hexR: base.hexR * s,
+      extLen: Math.max(0, base.extLen * s),
+      capR: base.capR * s,
+      dotR: base.dotR * s,
+      strokeWidth: base.strokeWidth * s,
+      fontSize: base.fontSize * s,
+    };
+  }
+
+  function applyCircularMask(el: HTMLElement, inner = 0.60, fade = 0.75) {
+    const mask = `radial-gradient(circle at 50% 50%, #000 ${inner * 100}%, transparent ${fade * 100}%)`;
+    (el.style as any).webkitMaskImage = mask;
+    (el.style as any).maskImage = mask;
+  }
+
+  function ensureNoiseOverlay() {
+    if (noiseRef.current) return;
+    const d = document.createElement("div");
+    d.className = "pointer-events-none fixed inset-0 z-[9998] opacity-5 mix-blend-overlay";
+    const size = 96;
+    const c = document.createElement("canvas");
+    c.width = size; c.height = size;
+    const ctx = c.getContext("2d", { willReadFrequently: false })!;
+    const img = ctx.createImageData(size, size);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = (Math.random() * 255) | 0;
+      img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = v; img.data[i + 3] = 18;
+    }
+    ctx.putImageData(img, 0, 0);
+    d.style.backgroundImage = `url(${c.toDataURL()})`;
+    d.style.backgroundSize = "64px 64px";
+    d.style.backgroundRepeat = "repeat";
+    rootRef.current?.appendChild(d);
+    noiseRef.current = d;
+  }
+
+  function makeBranch(angleDeg: number, text: string, p: Params, branchIndex: number) {
+    const svgns = "http://www.w3.org/2000/svg";
+    const g = document.createElementNS(svgns, "g");
+    g.setAttribute("transform", `rotate(${angleDeg})`);
+
+    const pad = 1;
+    const r0 = p.centerR + p.strokeWidth / 2 + pad;
+    const yStart = -r0;
+    const yEnd = yStart - p.mainLen;
+
+    const line = document.createElementNS(svgns, "line");
+    line.setAttribute("x1", "0"); line.setAttribute("y1", String(yStart));
+    line.setAttribute("x2", "0"); line.setAttribute("y2", String(yEnd + p.hexR + 2));
+    line.setAttribute("stroke", "var(--stroke-color)");
+    line.setAttribute("fill", "none");
+    line.setAttribute("stroke-linecap", "round");
+    line.setAttribute("stroke-linejoin", "round");
+    line.setAttribute("opacity", "0");
+    line.setAttribute("stroke-width", String(p.strokeWidth));
+    line.setAttribute("vector-effect", "non-scaling-stroke");
+    line.setAttribute("stroke-miterlimit", "1");
+    line.setAttribute("data-element", "main-line");
+    line.setAttribute("data-branch", String(branchIndex));
+    g.appendChild(line);
+    stateRef.current.animationElements.push(line);
+
+    const offs = [p.off1, p.off2].filter(v => v > 0 && v < p.mainLen - p.hexR - 8);
+    const rad = Math.abs(p.branchAng) * Math.PI / 180;
+    offs.forEach((d, offIndex) => {
+      const baseY = yStart - d;
+      const dx = Math.cos(-rad) * p.branchLen;
+      const dy = Math.sin(-rad) * p.branchLen;
+
+      ["left", "right"].forEach((side) => {
+        const sign = side === "left" ? -1 : 1;
+        const branch = document.createElementNS(svgns, "line");
+        branch.setAttribute("x1", "0"); branch.setAttribute("y1", String(baseY));
+        branch.setAttribute("x2", String(sign * dx)); branch.setAttribute("y2", String(baseY + dy));
+        branch.setAttribute("stroke", "var(--stroke-color)");
+        branch.setAttribute("fill", "none");
+        branch.setAttribute("stroke-linecap", "round");
+        branch.setAttribute("stroke-linejoin", "round");
+        branch.setAttribute("opacity", "0");
+        branch.setAttribute("stroke-width", String(p.strokeWidth));
+        branch.setAttribute("vector-effect", "non-scaling-stroke");
+        branch.setAttribute("stroke-miterlimit", "1");
+        branch.setAttribute("data-element", "branch");
+        branch.setAttribute("data-branch", String(branchIndex));
+        branch.setAttribute("data-side", side);
+        branch.setAttribute("data-offset", String(offIndex));
+        g.appendChild(branch);
+        stateRef.current.animationElements.push(branch);
+      });
     });
-    
-    const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-2, 2, 2, -2, 0.1, 1000);
-    camera.position.z = 1;
 
-    renderer.setSize(320, 320);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const r = p.hexR;
+    let dPath = "";
+    for (let i = 0; i < 6; i++) {
+      const a = Math.PI / 3 * i - Math.PI / 6;
+      const x = r * Math.cos(a);
+      const y = yEnd + r * Math.sin(a);
+      dPath += (i === 0 ? "M" : "L") + x + " " + y + " ";
+    }
+    dPath += "Z";
+    const hex = document.createElementNS(svgns, "path");
+    hex.setAttribute("d", dPath);
+    hex.setAttribute("stroke", "var(--stroke-color)");
+    hex.setAttribute("fill", "var(--fill-color)");
+    hex.setAttribute("opacity", "0");
+    hex.setAttribute("stroke-width", String(p.strokeWidth));
+    hex.setAttribute("vector-effect", "non-scaling-stroke");
+    hex.setAttribute("stroke-miterlimit", "1");
+    hex.setAttribute("data-element", "hex");
+    hex.setAttribute("data-branch", String(branchIndex));
+    g.appendChild(hex);
+    stateRef.current.animationElements.push(hex);
+    stateRef.current.hexElements.push(hex);
 
-    // Create animated ring geometry
-    const ringGeometry = new THREE.RingGeometry(0.28, 0.32, 64);
-    const ringMaterial = new THREE.ShaderMaterial({
-      transparent: true,
-      uniforms: {
-        uTime: { value: 0 },
-        uProgress: { value: timeline },
-        uEnergy: { value: energy }
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform float uTime;
-        uniform float uProgress;
-        uniform float uEnergy;
-        varying vec2 vUv;
-        
-        vec3 hsv2rgb(vec3 c) {
-          vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-          vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-          return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-        }
-        
-        void main() {
-          vec2 center = vUv - 0.5;
-          float dist = length(center);
-          float angle = atan(center.y, center.x);
-          
-          float hue = uTime * 0.1 + angle * 0.1 + dist * 0.5;
-          vec3 color = hsv2rgb(vec3(hue, 0.8, 1.0));
-          
-          float glow = sin(uTime * 4.0 + dist * 20.0) * 0.3 + 0.7;
-          float alpha = glow * uEnergy * (1.0 - smoothstep(0.9, 1.0, uProgress));
-          
-          gl_FragColor = vec4(color, alpha);
-        }
-      `
-    });
+    const txt = document.createElementNS(svgns, "text");
+    txt.setAttribute("x", "0"); txt.setAttribute("y", String(yEnd));
+    txt.setAttribute("fill", "var(--text-color)");
+    txt.setAttribute("font-weight", "800");
+    txt.setAttribute("opacity", "0");
+    txt.setAttribute("font-size", String(p.fontSize));
+    txt.setAttribute("data-element", "text");
+    txt.setAttribute("data-branch", String(branchIndex));
+    txt.setAttribute("text-anchor", "middle");
+    txt.setAttribute("dominant-baseline", "central");
+    txt.setAttribute("font-family", "serif");
+    txt.textContent = text;
+    g.appendChild(txt);
+    stateRef.current.animationElements.push(txt);
 
-    const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-    scene.add(ring);
-
-    // Create particles
-    const particleCount = 500;
-    const particles = new THREE.BufferGeometry();
-    const positions = new Float32Array(particleCount * 3);
-    const colors = new Float32Array(particleCount * 3);
-
-    for (let i = 0; i < particleCount; i++) {
-      const angle = (i / particleCount) * Math.PI * 2;
-      const radius = 0.3 + Math.random() * 0.1;
-      
-      positions[i * 3] = radius * Math.cos(angle);
-      positions[i * 3 + 1] = radius * Math.sin(angle);
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 0.1;
-
-      const color = new THREE.Color().setHSL((i / particleCount), 0.8, 0.8);
-      colors[i * 3] = color.r;
-      colors[i * 3 + 1] = color.g;
-      colors[i * 3 + 2] = color.b;
+    const hexTipY = yEnd - r;
+    if (p.extLen > 0) {
+      const ext = document.createElementNS(svgns, "line");
+      ext.setAttribute("x1", "0"); ext.setAttribute("y1", String(hexTipY));
+      ext.setAttribute("x2", "0"); ext.setAttribute("y2", String(hexTipY - p.extLen + p.capR + 2));
+      ext.setAttribute("stroke", "var(--stroke-color)");
+      ext.setAttribute("fill", "none");
+      ext.setAttribute("stroke-linecap", "round");
+      ext.setAttribute("stroke-linejoin", "round");
+      ext.setAttribute("opacity", "0");
+      ext.setAttribute("stroke-width", String(p.strokeWidth));
+      ext.setAttribute("vector-effect", "non-scaling-stroke");
+      ext.setAttribute("stroke-miterlimit", "1");
+      ext.setAttribute("data-element", "extension");
+      ext.setAttribute("data-branch", String(branchIndex));
+      g.appendChild(ext);
+      stateRef.current.animationElements.push(ext);
     }
 
-    particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const capY = hexTipY - p.extLen;
+    if (p.capR > 0) {
+      const cap = document.createElementNS(svgns, "circle");
+      cap.setAttribute("cx", "0"); cap.setAttribute("cy", String(capY));
+      cap.setAttribute("r", String(p.capR));
+      cap.setAttribute("stroke", "var(--stroke-color)");
+      cap.setAttribute("fill", "var(--fill-color)");
+      cap.setAttribute("opacity", "0");
+      cap.setAttribute("stroke-width", String(p.strokeWidth));
+      cap.setAttribute("vector-effect", "non-scaling-stroke");
+      cap.setAttribute("data-element", "cap");
+      cap.setAttribute("data-role", "cap");
+      g.appendChild(cap);
+      stateRef.current.animationElements.push(cap);
+      stateRef.current.capElements.push(cap);
 
-    const particleMaterial = new THREE.PointsMaterial({
-      size: 0.02,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.8
+      const capNucleus = document.createElementNS(svgns, "circle");
+      capNucleus.setAttribute("cx", "0");
+      capNucleus.setAttribute("cy", String(capY));
+      capNucleus.setAttribute("r", String(Math.max(1.5, p.capR * 0.22)));
+      capNucleus.setAttribute("fill", "var(--stroke-color)");
+      capNucleus.setAttribute("opacity", "0");
+      capNucleus.setAttribute("data-element", "cap-nucleus");
+      capNucleus.setAttribute("data-branch", String(branchIndex));
+      g.appendChild(capNucleus);
+      stateRef.current.animationElements.push(capNucleus);
+    }
+
+    return g;
+  }
+
+  function drawSet(target: SVGGElement, p: Params, layerName: "layer1" | "layer2") {
+    const akazaKanji = ["破","壊","殺","術","式","展"];
+    for (let i = 0; i < 6; i++) {
+      const branch = makeBranch(i * 60, akazaKanji[i], p, i + (layerName === "layer2" ? 6 : 0));
+      target.appendChild(branch);
+    }
+  }
+
+  function createGradients(svg: SVGSVGElement) {
+    const defs = svg.querySelector('defs') || document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    if (!svg.querySelector('defs')) svg.appendChild(defs);
+
+    defs.innerHTML = `
+      <filter id="akaza-glow" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="3" result="c"/>
+        <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <linearGradient id="line-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" style="stop-color:var(--stroke-color);stop-opacity:1" />
+        <stop offset="100%" style="stop-color:var(--text-color);stop-opacity:0.85" />
+      </linearGradient>
+      <linearGradient id="hex-gradient" x1="0%" y1="0%" x2="100%">
+        <stop offset="0%" style="stop-color:var(--stroke-color);stop-opacity:1" />
+        <stop offset="50%" style="stop-color:var(--text-color);stop-opacity:0.9" />
+        <stop offset="100%" style="stop-color:var(--stroke-color);stop-opacity:1" />
+      </linearGradient>
+    `;
+  }
+
+  function setupSnowflake() {
+    const layer1 = layer1Ref.current!;
+    const layer2 = layer2Ref.current!;
+    const centerDot = centerDotRef.current!;
+    const svg = svgRef.current!;
+
+    stateRef.current.animationElements = [];
+    stateRef.current.hexElements = [];
+    stateRef.current.capElements = [];
+
+    while (layer1.firstChild) layer1.removeChild(layer1.firstChild);
+    while (layer2.firstChild) layer2.removeChild(layer2.firstChild);
+
+    createGradients(svg);
+
+    centerDot.setAttribute("r", String(P.centerR));
+    centerDot.setAttribute("stroke", "var(--stroke-color)");
+    centerDot.setAttribute("fill", "var(--fill-color)");
+    centerDot.setAttribute("opacity", "0");
+    centerDot.setAttribute("stroke-width", String(P.strokeWidth));
+    centerDot.setAttribute("vector-effect", "non-scaling-stroke");
+    centerDot.setAttribute("data-role", "center");
+    stateRef.current.animationElements.push(centerDot);
+
+    drawSet(layer1, P, "layer1");
+    const P2 = scaledParams(P, P.scale);
+    drawSet(layer2, P2, "layer2");
+
+    layer2.setAttribute("transform", `translate(${P.tx} ${P.ty}) rotate(${P.rot})`);
+    layer1.setAttribute("filter", "url(#akaza-glow)");
+    layer2.setAttribute("filter", "url(#akaza-glow)");
+  }
+
+  function smoothFadeIn(el: Element, dur = 400, delay = 0, nat = true): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const t = window.setTimeout(() => {
+        const d = nat ? nDur(spd(dur), 0.12) : spd(dur);
+        const a = (el as HTMLElement).animate(
+          [{ opacity: 0 }, { opacity: 1 }],
+          { duration: d, easing: EZ_SMOOTH, fill: "forwards", delay: 0 }
+        );
+        trackAnim(a);
+        a.addEventListener("finish", () => resolve());
+      }, nat ? nDelay(spd(delay), 0.2) : spd(delay));
+      trackTimer(t);
+    });
+  }
+
+  async function startSpreadAnimation(): Promise<void> {
+    const centerDot = centerDotRef.current!;
+    const els = stateRef.current.animationElements;
+    els.forEach((el) => ((el as HTMLElement).style.opacity = "0"));
+
+    const compass = compassRef.current!;
+    compass.className = [
+      "absolute inset-0 pointer-events-none opacity-0 rounded-full z-0",
+      "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,20,147,0.15)_0deg,rgba(255,20,147,0.02)_60deg,rgba(255,20,147,0.15)_120deg,rgba(255,20,147,0.02)_180deg,rgba(255,20,147,0.15)_240deg,rgba(255,20,147,0.02)_300deg,rgba(255,20,147,0.15)_360deg)]",
+      "will-change-transform transform-gpu mix-blend-screen"
+    ].join(" ");
+    applyCircularMask(compass);
+
+    trackAnim(compass.animate(
+      [
+        { opacity: 0, transform: "rotate(0deg)" },
+        { opacity: 0.2, transform: "rotate(26deg)" }
+      ],
+      { duration: nDur(spd(820), 0.1), fill: "forwards", easing: EZ_NATURAL }
+    ));
+
+    const energyField = energyFieldRef.current!;
+    energyField.className = [
+      "absolute inset-0 pointer-events-none opacity-0 rounded-full z-0",
+      "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.08)_0%,rgba(255,20,147,0.04)_40%,rgba(255,20,147,0.01)_80%,transparent_100%)]",
+      "mix-blend-screen"
+    ].join(" ");
+    applyCircularMask(energyField);
+
+    trackAnim(energyField.animate(
+      [
+        { opacity: 0, transform: "rotate(0deg)" },
+        { opacity: 0.14, transform: "rotate(42deg)" }
+      ],
+      { duration: nDur(spd(900), 0.1), fill: "forwards", easing: EZ_NATURAL }
+    ));
+
+    await smoothFadeIn(centerDot, 520, T.spreadStartDelay);
+    const glowColor = stateRef.current.theme === "pink" ? "var(--glow-pink)" : "var(--glow-blue)";
+    (centerDot as SVGCircleElement).style.filter = `drop-shadow(0 0 8px ${glowColor})`;
+
+    const aura = auraRef.current!;
+    aura.className = [
+      "absolute inset-0 pointer-events-none opacity-0 rounded-full z-10",
+      "bg-[radial-gradient(circle_at_50%_50%,var(--glow-pink-soft)_0%,transparent_70%)]",
+      "mix-blend-screen"
+    ].join(" ");
+    applyCircularMask(aura, 0.55, 0.78);
+
+    await new Promise(r => { const t = setTimeout(r, nDelay(spd(T.spreadStep), 0.2)); trackTimer(t as unknown as number); });
+    const mainLines = els.filter(el => el.getAttribute("data-element") === "main-line");
+    await Promise.all(mainLines.map((el, i) => {
+      (el as HTMLElement).style.filter = `drop-shadow(0 0 4px ${glowColor})`;
+      const a = (el as HTMLElement).animate(
+        [
+          { opacity: 0, strokeDasharray: "0 1000" },
+          { opacity: 0.3, strokeDasharray: "200 800", offset: 0.3 },
+          { opacity: 1, strokeDasharray: "1000 0" }
+        ],
+        { duration: nDur(spd(520), 0.15), delay: nDelay(i * 35, 0.3), easing: EZ_NATURAL, fill: "forwards" }
+      );
+      trackAnim(a);
+      return new Promise(res => a.addEventListener("finish", () => res(undefined)));
+    }));
+
+    await new Promise(r => { const t = setTimeout(r, nDelay(spd(T.spreadStep), 0.2)); trackTimer(t as unknown as number); });
+    const hexes = stateRef.current.hexElements;
+    await Promise.all(hexes.map((hex, i) => {
+      const a = (hex as HTMLElement).animate(
+        [
+          { opacity: 0, transform: "scale(0.7)" },
+          { opacity: 1, transform: "scale(1.05)", offset: 0.6 },
+          { opacity: 1, transform: "scale(1)" }
+        ],
+        { duration: nDur(spd(450), 0.18), delay: nDelay(i * T.hexStagger, 0.25), easing: EZ_NATURAL, fill: "forwards" }
+      );
+      trackAnim(a);
+      return new Promise(res => a.addEventListener("finish", () => res(undefined)));
+    }));
+
+    await new Promise(r => { const t = setTimeout(r, nDelay(spd(T.spreadStep), 0.2)); trackTimer(t as unknown as number); });
+    const branches = els.filter(el => el.getAttribute("data-element") === "branch");
+    await Promise.all(branches.map((b, i) => {
+      (b as HTMLElement).style.filter = `drop-shadow(0 0 3px ${glowColor})`;
+      const a = (b as HTMLElement).animate(
+        [
+          { opacity: 0, strokeDasharray: "0 100" },
+          { opacity: 1, strokeDasharray: "100 0" }
+        ],
+        { duration: nDur(spd(380), 0.2), delay: nDelay(i * 28, 0.25), easing: EZ_NATURAL, fill: "forwards" }
+      );
+      trackAnim(a);
+      return new Promise(res => a.addEventListener("finish", () => res(undefined)));
+    }));
+
+    await new Promise(r => { const t = setTimeout(r, nDelay(spd(T.spreadStep), 0.2)); trackTimer(t as unknown as number); });
+    const exts = els.filter(el => {
+      const k = el.getAttribute("data-element");
+      return k === "extension" || k === "cap";
+    });
+    await Promise.all(exts.map((e, i) => {
+      const a = (e as HTMLElement).animate(
+        [
+          { opacity: 0, transform: "scale(0.8)" },
+          { opacity: 1, transform: "scale(1)" }
+        ],
+        { duration: nDur(spd(320), 0.15), delay: nDelay(i * 20, 0.25), easing: EZ_NATURAL, fill: "forwards" }
+      );
+      trackAnim(a);
+      return new Promise(res => a.addEventListener("finish", () => res(undefined)));
+    }));
+
+    const capDots = els.filter(el => el.getAttribute("data-element") === "cap-nucleus");
+    await Promise.all(capDots.map((e, i) => smoothFadeIn(e, 220, i * 14)));
+
+    await new Promise(r => { const t = setTimeout(r, nDelay(spd(T.spreadStep), 0.2)); trackTimer(t as unknown as number); });
+    const texts = els.filter(el => el.getAttribute("data-element") === "text");
+    await Promise.all(texts.map((d, i) => {
+      (d as HTMLElement).style.filter = `drop-shadow(0 0 4px ${glowColor})`;
+      return smoothFadeIn(d, 360, i * nDelay(24, 0.25));
+    }));
+  }
+
+  async function startHexGlowSequence(): Promise<void> {
+    const hexes = [...stateRef.current.hexElements];
+    const svg = svgRef.current!;
+    const glowColor = stateRef.current.theme === "pink" ? "var(--glow-pink)" : "var(--glow-blue)";
+
+    const compass = compassRef.current!;
+    trackAnim(compass.animate(
+      [{ transform: "rotate(26deg)" }, { transform: "rotate(388deg)" }],
+      { duration: nDur(spd(T.hexPulse * hexes.length * 0.8), 0.1), easing: "linear", fill: "forwards" }
+    ));
+
+    await Promise.all(hexes.map((hex, i) =>
+      new Promise<void>((resolve) => {
+        const t = window.setTimeout(() => {
+          const a = (hex as HTMLElement).animate(
+            [
+              { filter: `drop-shadow(0 0 3px ${glowColor})` },
+              { filter: `drop-shadow(0 0 10px ${glowColor})` },
+              { filter: `drop-shadow(0 0 6px ${glowColor})` },
+            ],
+            { duration: nDur(spd(T.hexPulse), 0.12), easing: EZ_NATURAL, fill: "forwards" }
+          );
+          trackAnim(a);
+          a.addEventListener("finish", () => resolve());
+        }, i * nDelay(spd(T.hexStagger), 0.25));
+        trackTimer(t);
+      })
+    ));
+
+    const a = svg.animate(
+      [
+        { filter: `drop-shadow(0 0 8px ${glowColor})` },
+        { filter: `drop-shadow(0 0 16px ${glowColor})` },
+        { filter: `drop-shadow(0 0 10px ${glowColor})` }
+      ],
+      { duration: nDur(spd(700), 0.1), fill: "forwards", easing: EZ_OUT }
+    );
+    trackAnim(a);
+    await new Promise(res => a.addEventListener("finish", () => res(undefined)));
+  }
+
+  async function transitionExplosion(): Promise<void> {
+    const host = rootRef.current!;
+    const explosionContainer = document.createElement('div');
+    explosionContainer.className = 'fixed inset-0 pointer-events-none z-[9999] overflow-visible mix-blend-screen';
+    host.appendChild(explosionContainer);
+
+    const anticip = host.animate(
+      [
+        { transform: "scale(1)" },
+        { transform: "scale(0.98)", offset: 0.3 },
+        { transform: "scale(1)" }
+      ],
+      { duration: nDur(160, 0.05), easing: EZ_NATURAL, fill: "none" }
+    );
+    trackAnim(anticip);
+
+    const waveCount = 2;
+    for (let wave = 0; wave < waveCount; wave++) {
+      const ring = document.createElement('div');
+      ring.className = [
+        "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
+        "pointer-events-none aspect-square h-[60vmin] rounded-full",
+        "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.15)_0%,rgba(255,20,147,0.05)_70%,transparent_100%)]",
+        "will-change-transform transform-gpu"
+      ].join(" ");
+      explosionContainer.appendChild(ring);
+
+      const grow = ring.animate(
+        [
+          { opacity: 0, transform: "translate(-50%, -50%) scale(0.3)" },
+          { opacity: 0.8, transform: "translate(-50%, -50%) scale(1.2)", offset: 0.4 },
+          { opacity: 0.3, transform: "translate(-50%, -50%) scale(2.2)", offset: 0.8 },
+          { opacity: 0, transform: "translate(-50%, -50%) scale(3)" }
+        ],
+        { duration: nDur(900 - wave * 100, 0.1), delay: nDelay(80 + wave * 120, 0.1), easing: EZ_NATURAL, fill: "forwards" }
+      );
+      trackAnim(grow);
+    }
+
+    for (let i = 0; i < 6; i++) {
+      const angle = i * 60 + rrange(-8, 8);
+      const stream = document.createElement('div');
+      const length = 35 + rrange(-5, 5);
+      stream.className = [
+        "absolute left-1/2 top-1/2 -translate-x-1/2 origin-top pointer-events-none",
+        `h-[${length}vh] w-[3px]`,
+        "bg-[linear-gradient(to_bottom,rgba(255,20,147,0.8)_0%,rgba(255,20,147,0.4)_50%,transparent_100%)]",
+        "shadow-[0_0_8px_rgba(255,20,147,0.4)]",
+        `rotate-[${angle}deg]`,
+        "rounded-full opacity-0",
+        "will-change-transform transform-gpu"
+      ].join(" ");
+      explosionContainer.appendChild(stream);
+
+      const streamAnim = stream.animate(
+        [
+          { opacity: 0, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(0) scaleX(0.5)` },
+          { opacity: 0.9, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(0.8) scaleX(1)`, offset: 0.3 },
+          { opacity: 0.6, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.2) scaleX(0.8)`, offset: 0.7 },
+          { opacity: 0, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.5) scaleX(0.6)` }
+        ],
+        { duration: nDur(750, 0.12), delay: nDelay(i * 45, 0.2), easing: EZ_NATURAL, fill: "forwards" }
+      );
+      trackAnim(streamAnim);
+    }
+
+    const particleHolder = document.createElement('div');
+    particleHolder.className = "absolute inset-0 pointer-events-none";
+    explosionContainer.appendChild(particleHolder);
+    const particles = 16;
+    for (let p = 0; p < particles; p++) {
+      const baseAngle = (360 / particles) * p;
+      const angle = baseAngle + rrange(-12, 12);
+      const particle = document.createElement('div');
+      const size = 0.3 + rrange(-0.1, 0.1);
+      particle.className = [
+        "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
+        `h-[${size}vh] w-[${size}vh] rounded-full`,
+        "bg-[radial-gradient(circle,rgba(255,105,180,0.9)_0%,rgba(255,105,180,0.3)_60%,transparent_100%)]",
+        `rotate-[${angle}deg]`,
+        "will-change-transform transform-gpu"
+      ].join(" ");
+      particleHolder.appendChild(particle);
+
+      const dist = 18 + rrange(-4, 4);
+      const particleAnim = particle.animate(
+        [
+          { opacity: 0, transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(0) scale(0.8)` },
+          { opacity: 0.8, transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-${dist * 0.6}vmin) scale(1)`, offset: 0.4 },
+          { opacity: 0.4, transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-${dist}vmin) scale(0.9)`, offset: 0.8 },
+          { opacity: 0, transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-${dist * 1.2}vmin) scale(0.7)` }
+        ],
+        { duration: nDur(800 + rrange(-100, 100), 0.15), delay: nDelay(60 + (p % 4) * 30, 0.25), easing: EZ_OUT, fill: "forwards" }
+      );
+      trackAnim(particleAnim);
+    }
+
+    await new Promise(resolve => {
+      const t = window.setTimeout(() => {
+        if (explosionContainer.parentNode) explosionContainer.parentNode.removeChild(explosionContainer);
+        resolve(undefined);
+      }, 1200);
+      trackTimer(t);
+    });
+  }
+
+  async function switchThemeToBlueWoosh(): Promise<void> {
+    const svg = svgRef.current!;
+
+    const explosionPromise = transitionExplosion();
+
+    const a1 = svg.animate(
+      [
+        { filter: "drop-shadow(0 0 10px var(--glow-pink))" },
+        { filter: "drop-shadow(0 0 22px var(--glow-pink)) drop-shadow(0 0 20px var(--glow-blue))" },
+        { filter: "drop-shadow(0 0 12px var(--glow-blue))" },
+      ],
+      { duration: nDur(T.woosh, 0.1), easing: EZ_NATURAL, fill: "forwards" }
+    );
+    trackAnim(a1);
+
+    const compass = compassRef.current!;
+    trackAnim(compass.animate(
+      [{ transform: "rotate(388deg)" }, { transform: "rotate(540deg)" }],
+      { duration: nDur(T.woosh, 0.1), easing: EZ_NATURAL, fill: "forwards" }
+    ));
+
+    await new Promise(r => {
+      const t = setTimeout(r, nDelay(T.wooshBetween, 0.15));
+      trackTimer(t as unknown as number);
     });
 
-    const particleSystem = new THREE.Points(particles, particleMaterial);
-    scene.add(particleSystem);
+    const root = rootRef.current!;
+    stateRef.current.theme = "blue";
+    (root.style as any).setProperty("--stroke-color", AKAZA_BLUE.stroke);
+    (root.style as any).setProperty("--text-color", AKAZA_BLUE.text);
+    (root.style as any).setProperty("--fill-color", AKAZA_BLUE.fill);
 
-    const clock = new THREE.Clock();
+    if (compassRef.current) {
+      compassRef.current.className = [
+        "absolute inset-0 pointer-events-none opacity-0 rounded-full z-0",
+        "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(0,229,255,0.15)_0deg,rgba(0,229,255,0.02)_60deg,rgba(0,229,255,0.15)_120deg,rgba(0,229,255,0.02)_180deg,rgba(0,229,255,0.15)_240deg,rgba(0,229,255,0.02)_300deg,rgba(0,229,255,0.15)_360deg)]",
+        "mix-blend-screen"
+      ].join(" ");
+      applyCircularMask(compassRef.current);
+    }
+    if (energyFieldRef.current) {
+      energyFieldRef.current.className = [
+        "absolute inset-0 pointer-events-none opacity-0 rounded-full z-0",
+        "bg-[radial-gradient(circle_at_50%_50%,rgba(0,229,255,0.08)_0%,rgba(0,229,255,0.04)_40%,rgba(0,229,255,0.01)_80%,transparent_100%)]",
+        "mix-blend-screen"
+      ].join(" ");
+      applyCircularMask(energyFieldRef.current);
+    }
+    if (auraRef.current) {
+      auraRef.current.className = [
+        "absolute inset-0 pointer-events-none opacity-0 rounded-full z-10",
+        "bg-[radial-gradient(circle_at_50%_50%,var(--glow-blue-soft)_0%,transparent_70%)]",
+        "mix-blend-screen"
+      ].join(" ");
+      applyCircularMask(auraRef.current, 0.55, 0.78);
+    }
 
-    const animate = () => {
-      const elapsedTime = clock.getElapsedTime();
-      
-      // Update uniforms
-      ringMaterial.uniforms.uTime.value = elapsedTime;
-      ringMaterial.uniforms.uProgress.value = timeline;
-      ringMaterial.uniforms.uEnergy.value = energy;
+    createGradients(svg);
 
-      // Rotate elements
-      ring.rotation.z = elapsedTime * 0.5;
-      particleSystem.rotation.z = -elapsedTime * 0.3;
+    const els = stateRef.current.animationElements;
+    els.forEach((el) => {
+      const role = el.getAttribute("data-element");
+      const baseGlow = role === "branch" ? 3 : role === "main-line" ? 4 : role === "text" ? 4 : 6;
+      (el as HTMLElement).style.filter = `drop-shadow(0 0 ${baseGlow}px var(--glow-blue))`;
+    });
 
-      renderer.render(scene, camera);
-      animationRef.current = requestAnimationFrame(animate);
-    };
+    const aura = auraRef.current!;
+    const a3 = aura.animate([{ opacity: 0.2 }, { opacity: 0.25 }],
+      { duration: nDur(380, 0.1), fill: "forwards", easing: EZ_NATURAL });
+    trackAnim(a3);
 
-    animate();
+    await Promise.all([
+      new Promise(res => a1.addEventListener("finish", () => res(undefined))),
+      new Promise(res => a3.addEventListener("finish", () => res(undefined))),
+      explosionPromise,
+    ]);
+  }
 
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-      renderer.dispose();
-      ringGeometry.dispose();
-      ringMaterial.dispose();
-      particles.dispose();
-      particleMaterial.dispose();
-    };
-  }, [timeline, energy]);
+  async function blueBoom(): Promise<void> {
+    const ring = ringRef.current!;
+    const aura = auraRef.current!;
+    const svg = svgRef.current!;
+    const compass = compassRef.current!;
+    const energyField = energyFieldRef.current!;
 
-  return <canvas ref={canvasRef} className="w-80 h-80" />;
-};
+    const auraDown = aura.animate(
+      [{ opacity: 0.25 }, { opacity: 0.12 }],
+      { duration: nDur(150, 0.05), fill: "forwards", easing: EZ_NATURAL }
+    );
+    trackAnim(auraDown);
 
-const LoadingScreen: React.FC<LoadingScreenProps> = ({ onLoadingComplete }) => {
-  const [timeline, setTimeline] = useState(0);
-  const [energy, setEnergy] = useState(0);
-  const [done, setDone] = useState(false);
+    ring.className = [
+      "absolute inset-0 pointer-events-none opacity-0 rounded-full z-20 mix-blend-screen",
+      "bg-[radial-gradient(circle_at_50%_50%,var(--glow-blue)_0%,rgba(0,229,255,0.5)_20%,rgba(0,229,255,0.2)_50%,transparent_80%)]",
+      "will-change-transform transform-gpu"
+    ].join(" ");
+    applyCircularMask(ring, 0.5, 0.85);
 
-  // Enhanced progress simulation with realistic loading behavior
+    const a1 = ring.animate(
+      [
+        { opacity: 0, transform: "scale(0.2)" },
+        { opacity: 0.6, transform: "scale(1.45)", offset: 0.45 },
+        { opacity: 0.35, transform: "scale(2.45)", offset: 0.82 },
+        { opacity: 0, transform: "scale(3.45)" },
+      ],
+      { duration: nDur(T.boom, 0.1), easing: EZ_NATURAL, fill: "forwards" }
+    );
+    trackAnim(a1);
+
+    const a2 = compass.animate(
+      [
+        { opacity: 0.2, transform: "rotate(540deg) scale(1)" },
+        { opacity: 0.4, transform: "rotate(720deg) scale(1.015)" },
+        { opacity: 0, transform: "rotate(900deg) scale(1)" },
+      ],
+      { duration: nDur(T.boom, 0.1), easing: EZ_NATURAL, fill: "forwards" }
+    );
+    trackAnim(a2);
+
+    const a3 = energyField.animate(
+      [
+        { opacity: 0.15, transform: "rotate(45deg)" },
+        { opacity: 0.3, transform: "rotate(-90deg)" },
+        { opacity: 0, transform: "rotate(-270deg)" },
+      ],
+      { duration: nDur(Math.round(T.boom * 1.08), 0.1), easing: EZ_NATURAL, fill: "forwards" }
+    );
+    trackAnim(a3);
+
+    const a4 = svg.animate(
+      [
+        { filter: "drop-shadow(0 0 12px var(--glow-blue))" },
+        { filter: "drop-shadow(0 0 24px var(--glow-blue))" },
+        { filter: "drop-shadow(0 0 14px var(--glow-blue))" },
+      ],
+      { duration: nDur(T.boom, 0.1), easing: EZ_INOUT, fill: "forwards" }
+    );
+    trackAnim(a4);
+
+    spawnNaturalEnergyBurst();
+
+    await Promise.all([
+      new Promise(res => a1.addEventListener("finish", () => res(undefined))),
+      new Promise(res => a2.addEventListener("finish", () => res(undefined))),
+      new Promise(res => a3.addEventListener("finish", () => res(undefined))),
+      new Promise(res => a4.addEventListener("finish", () => res(undefined))),
+      new Promise(res => auraDown.addEventListener("finish", () => res(undefined))),
+    ]);
+  }
+
+  function spawnNaturalEnergyBurst() {
+    const host = rootRef.current!;
+    const burstContainer = document.createElement('div');
+    burstContainer.className = 'fixed inset-0 pointer-events-none z-[9999] overflow-visible mix-blend-screen';
+    host.appendChild(burstContainer);
+
+    const energyWave = document.createElement('div');
+    energyWave.className = [
+      "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
+      "pointer-events-none aspect-square h-[55vmin]",
+      "bg-[radial-gradient(circle_at_50%_50%,rgba(0,234,255,0.25)_0%,rgba(0,234,255,0.12)_40%,rgba(0,234,255,0.05)_70%,transparent_100%)]",
+      "rounded-full will-change-transform transform-gpu"
+    ].join(" ");
+    burstContainer.appendChild(energyWave);
+
+    const waveAnimation = energyWave.animate(
+      [
+        { opacity: 0, transform: 'translate(-50%, -50%) scale(0.4) rotate(0deg)' },
+        { opacity: 0.8, transform: 'translate(-50%, -50%) scale(1.1) rotate(30deg)', offset: 0.35 },
+        { opacity: 0.4, transform: 'translate(-50%, -50%) scale(2.2) rotate(90deg)', offset: 0.75 },
+        { opacity: 0, transform: 'translate(-50%, -50%) scale(3.5) rotate(150deg)' }
+      ],
+      { duration: nDur(950, 0.1), easing: EZ_NATURAL, fill: 'forwards' }
+    );
+    trackAnim(waveAnimation);
+
+    for (let i = 0; i < 8; i++) {
+      const base = i * 45;
+      const angle = base + rrange(-10, 10);
+      const flow = document.createElement('div');
+      const length = 32 + rrange(-6, 6);
+      const width = 1.5 + rrange(-0.3, 0.3);
+      flow.className = [
+        "absolute left-1/2 top-1/2 -translate-x-1/2 origin-top pointer-events-none",
+        `h-[${length}vh] w-[${width}px]`,
+        "bg-[linear-gradient(to_bottom,rgba(0,234,255,0.9)_0%,rgba(0,234,255,0.4)_60%,transparent_100%)]",
+        "shadow-[0_0_6px_rgba(0,234,255,0.5)]",
+        `rotate-[${angle}deg]`,
+        "rounded-full will-change-transform transform-gpu"
+      ].join(" ");
+      burstContainer.appendChild(flow);
+
+      const flowAnimation = flow.animate(
+        [
+          { opacity: 0, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(0) scaleX(0.6)` },
+          { opacity: 0.9, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(0.7) scaleX(1)`, offset: 0.4 },
+          { opacity: 0.5, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.1) scaleX(0.8)`, offset: 0.75 },
+          { opacity: 0, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.4) scaleX(0.6)` }
+        ],
+        { duration: nDur(750 + rrange(-50, 50), 0.12), delay: nDelay((i % 4) * 35, 0.2), easing: EZ_NATURAL, fill: 'forwards' }
+      );
+      trackAnim(flowAnimation);
+    }
+
+    const t = window.setTimeout(() => {
+      if (burstContainer.parentNode) burstContainer.parentNode.removeChild(burstContainer);
+    }, 1400);
+    trackTimer(t);
+  }
+
+  async function runOnce(): Promise<void> {
+    const root = rootRef.current!;
+    (root.style as any).setProperty("--stroke-color", AKAZA_PINK.stroke);
+    (root.style as any).setProperty("--text-color", AKAZA_PINK.text);
+    (root.style as any).setProperty("--fill-color", AKAZA_PINK.fill);
+    stateRef.current.theme = "pink";
+
+    ensureNoiseOverlay();
+
+    if (compassRef.current) {
+      compassRef.current.className = [
+        "absolute inset-0 pointer-events-none opacity-0 z-0",
+        "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,20,147,0.15)_0deg,rgba(255,20,147,0.02)_60deg,rgba(255,20,147,0.15)_120deg,rgba(255,20,147,0.02)_180deg,rgba(255,20,147,0.15)_240deg,rgba(255,20,147,0.02)_300deg,rgba(255,20,147,0.15)_360deg)]",
+        "mix-blend-screen"
+      ].join(" ");
+      applyCircularMask(compassRef.current);
+    }
+    if (energyFieldRef.current) {
+      energyFieldRef.current.className = [
+        "absolute inset-0 pointer-events-none opacity-0 z-0",
+        "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.08)_0%,rgba(255,20,147,0.04)_40%,rgba(255,20,147,0.01)_80%,transparent_100%)]",
+        "mix-blend-screen"
+      ].join(" ");
+      applyCircularMask(energyFieldRef.current);
+    }
+    if (auraRef.current) {
+      auraRef.current.className = [
+        "absolute inset-0 pointer-events-none opacity-0 z-10",
+        "bg-[radial-gradient(circle_at_50%_50%,var(--glow-pink-soft)_0%,transparent_70%)]",
+        "mix-blend-screen"
+      ].join(" ");
+      applyCircularMask(auraRef.current, 0.55, 0.78);
+    }
+
+    setupSnowflake();
+
+    await new Promise(r => { const t = setTimeout(r, spd(T.startDelay)); trackTimer(t as unknown as number); });
+    await startSpreadAnimation();
+    await new Promise(r => { const t = setTimeout(r, spd(150)); trackTimer(t as unknown as number); });
+    await startHexGlowSequence();
+    await new Promise(r => { const t = setTimeout(r, spd(T.afterAllGlow)); trackTimer(t as unknown as number); });
+    await new Promise(r => { const t = setTimeout(r, spd(T.beforeWooshBlue)); trackTimer(t as unknown as number); });
+    await switchThemeToBlueWoosh();
+    await new Promise(r => { const t = setTimeout(r, 200); trackTimer(t as unknown as number); });
+    await blueBoom();
+
+    setExiting(true);
+    const c = containerRef.current!;
+    const fadeOut = c.animate(
+      [
+        { opacity: 1, transform: "scale(1)" },
+        { opacity: 0.72, transform: "scale(0.985)" },
+        { opacity: 0, transform: "scale(0.96)" }
+      ],
+      { duration: nDur(1000, 0.06), easing: EZ_OUT, fill: "forwards" }
+    );
+    trackAnim(fadeOut);
+    await new Promise(res => fadeOut.addEventListener("finish", () => res(undefined)));
+
+    clearAllAsync();
+    setExited(true);
+    onFinish?.();
+  }
+
+  function restartLoopIfNeeded() {
+    if (!LOOP) return;
+    const t = window.setTimeout(() => {
+      clearAllAsync();
+      runOnce();
+      restartLoopIfNeeded();
+    }, TOTAL_LOADING_TIME + 1500);
+    trackTimer(t);
+  }
+
   useEffect(() => {
-    const phases = [
-      { duration: 800, ease: (t: number) => t * t }, // slow start
-      { duration: 1000, ease: (t: number) => t }, // linear middle
-      { duration: 600, ease: (t: number) => 1 - Math.pow(1 - t, 3) }, // fast finish
-    ];
-    
-    let currentPhase = 0;
-    let phaseStart = performance.now();
-    let totalProgress = 0;
-    
-    const tick = () => {
-      const now = performance.now();
-      const phaseElapsed = now - phaseStart;
-      const phase = phases[currentPhase];
-      
-      if (phaseElapsed >= phase.duration) {
-        totalProgress += 1 / phases.length;
-        currentPhase++;
-        phaseStart = now;
-        
-        if (currentPhase >= phases.length) {
-          setTimeline(1);
-          setDone(true);
-          setTimeout(onLoadingComplete, 300);
-          return;
-        }
-      }
-      
-      const phaseProgress = Math.min(phaseElapsed / phase.duration, 1);
-      const easedPhaseProgress = phase.ease(phaseProgress);
-      const currentTotal = totalProgress + (easedPhaseProgress / phases.length);
-      
-      setTimeline(currentTotal);
-      
-      // Dynamic energy based on progress and time
-      const energyBase = Math.sin(now * 0.005) * 0.3 + 0.7;
-      const progressEnergy = 1 - Math.abs(currentTotal - 0.5) * 2; // peak at 50%
-      setEnergy(energyBase * progressEnergy);
-      
-      requestAnimationFrame(tick);
-    };
-    
-    requestAnimationFrame(tick);
-  }, [onLoadingComplete]);
-
-  // Progressive loading messages
-  const getLoadingMessage = useCallback((progress: number) => {
-    if (progress < 0.2) return "Awakening Systems";
-    if (progress < 0.4) return "Calibrating Reality";
-    if (progress < 0.6) return "Synchronizing Dimensions";
-    if (progress < 0.8) return "Materializing Interface";
-    return "Finalizing Experience";
+    runOnce();
+    restartLoopIfNeeded();
+    return () => { clearAllAsync(); };
   }, []);
 
-  const loadingMessage = getLoadingMessage(timeline);
-  const percentage = Math.round(timeline * 100);
+  if (exited) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-700 ${
-      done ? "opacity-0 pointer-events-none" : "opacity-100"
-    }`}>
-      {/* Enhanced background with gradient animation */}
-      <div 
-        className="absolute inset-0 transition-all duration-1000"
-        style={{
-          background: `
-            radial-gradient(circle at 50% 50%, rgba(15, 15, 35, 0.95) 0%, rgba(5, 5, 15, 0.98) 100%),
-            radial-gradient(circle at ${30 + energy * 20}% ${35 + energy * 15}%, rgba(100, 50, 200, ${0.08 * energy}) 0%, transparent 50%),
-            radial-gradient(circle at ${70 - energy * 15}% ${70 + energy * 10}%, rgba(50, 150, 255, ${0.06 * energy}) 0%, transparent 50%)
-          `
-        }}
-      />
-      
-      {/* Animated grid overlay */}
-      <div 
-        className="absolute inset-0 opacity-5 transition-opacity duration-1000"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-          `,
-          backgroundSize: "50px 50px",
-          transform: `translate(${Math.sin(timeline * 4) * 10}px, ${Math.cos(timeline * 4) * 10}px)`
-        }}
-      />
+    <div
+      ref={rootRef}
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-visible bg-black ${exiting ? "pointer-events-none" : ""}`}
+      style={rootVars}
+      aria-hidden={exiting}
+      aria-label="Loading"
+    >
+      <div ref={compassRef} className="absolute inset-0 pointer-events-none opacity-0 z-0" />
+      <div ref={energyFieldRef} className="absolute inset-0 pointer-events-none opacity-0 z-0" />
 
-      {/* Main loader visualization */}
-      <div className="relative">
-        {/* Outer glow ring */}
-        <div 
-          className="absolute inset-0 rounded-full transition-all duration-500"
-          style={{
-            width: "400px",
-            height: "400px",
-            left: "-40px",
-            top: "-40px",
-            background: `radial-gradient(circle, rgba(100, 200, 255, ${0.15 * energy}) 0%, transparent 70%)`,
-            filter: `blur(${20 + energy * 30}px)`,
-            transform: `scale(${1 + energy * 0.1})`,
-          }}
-        />
-        
-        {/* WebGL Canvas */}
-        <VisualLoader timeline={timeline} energy={energy} />
-      </div>
+      <div
+        ref={containerRef}
+        className="relative w-screen h-screen flex items-center justify-center overflow-visible"
+      >
+        <div ref={auraRef} className="absolute inset-0 pointer-events-none opacity-0 z-10" />
 
-      {/* Enhanced UI */}
-      <div className="absolute bottom-16 text-center">
-        {/* Loading message */}
-        <div 
-          className="text-sm tracking-widest uppercase mb-8 transition-all duration-500"
-          style={{
-            color: `rgba(255, 255, 255, ${0.7 + energy * 0.3})`,
-            textShadow: `0 0 ${10 + energy * 20}px rgba(100, 200, 255, ${0.5 * energy})`,
-            letterSpacing: `${0.3 + energy * 0.2}em`
-          }}
+        <svg
+          ref={svgRef}
+          viewBox="-300 -300 600 600"
+          aria-label="Loading Animation"
+          className="w-[min(70vw,70vh)] h-[min(70vw,70vh)] z-10"
+          shapeRendering="geometricPrecision"
         >
-          {loadingMessage}
-        </div>
-        
-        {/* Enhanced progress bar */}
-        <div className="relative w-80 h-0.5 bg-white/10 rounded-full overflow-hidden mb-4">
-          <div
-            className="absolute inset-y-0 left-0 rounded-full transition-all duration-300"
-            style={{
-              width: `${percentage}%`,
-              background: `linear-gradient(90deg, 
-                rgba(100, 200, 255, 0.8) 0%, 
-                rgba(150, 100, 255, 0.9) 50%, 
-                rgba(255, 100, 150, 1) 100%)`,
-              boxShadow: `0 0 ${10 + energy * 20}px rgba(150, 100, 255, ${0.6 * energy})`
-            }}
-          />
-          
-          {/* Progress bar glow */}
-          <div
-            className="absolute inset-y-0 left-0 rounded-full"
-            style={{
-              width: `${percentage}%`,
-              background: `linear-gradient(90deg, 
-                rgba(100, 200, 255, 0.3) 0%, 
-                rgba(255, 255, 255, 0.5) 100%)`,
-              filter: `blur(8px)`,
-            }}
-          />
-        </div>
-        
-        {/* Percentage display */}
-        <div 
-          className="text-xs font-mono tabular-nums transition-all duration-300"
-          style={{
-            color: `rgba(255, 255, 255, ${0.6 + energy * 0.4})`,
-            textShadow: `0 0 ${5 + energy * 10}px rgba(255, 255, 255, ${0.3 * energy})`
-          }}
-        >
-          {percentage}%
-        </div>
+          <circle ref={centerDotRef} cx="0" cy="0" r="12" data-role="center" />
+          <g ref={layer1Ref}></g>
+          <g ref={layer2Ref}></g>
+        </svg>
+
+        <div
+          ref={ringRef}
+          className="absolute inset-0 pointer-events-none opacity-0 z-20 mix-blend-screen
+                    bg-[radial-gradient(circle_at_50%_50%,var(--glow-blue)_0%,rgba(0,229,255,0.5)_20%,rgba(0,229,255,0.2)_50%,transparent_80%)]" />
       </div>
-    </div>
-  );
-};
-
-// Demo component to test the loading screen
-const App: React.FC = () => {
-  const [showLoader, setShowLoader] = useState(true);
-
-  const handleLoadingComplete = () => {
-    setShowLoader(false);
-  };
-
-  const resetLoader = () => {
-    setShowLoader(true);
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-      {showLoader ? (
-        <LoadingScreen onLoadingComplete={handleLoadingComplete} />
-      ) : (
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-white mb-8">Loading Complete!</h1>
-          <p className="text-gray-300 mb-8">Your enhanced loading screen has finished.</p>
-          <button
-            onClick={resetLoader}
-            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
-          >
-            Show Loading Screen Again
-          </button>
-        </div>
-      )}
     </div>
   );
 };

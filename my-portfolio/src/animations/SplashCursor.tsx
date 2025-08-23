@@ -69,38 +69,61 @@ export default function SplashCursor({
   TRANSPARENT = true,
 }: SplashCursorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animationRef = useRef<number | null>(null);
+  const isVisibleRef = useRef<boolean>(true);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    let pointers: Pointer[] = [pointerPrototype()];
 
-    let config = {
-      SIM_RESOLUTION: SIM_RESOLUTION!,
-      DYE_RESOLUTION: DYE_RESOLUTION!,
-      CAPTURE_RESOLUTION: CAPTURE_RESOLUTION!,
-      DENSITY_DISSIPATION: DENSITY_DISSIPATION!,
-      VELOCITY_DISSIPATION: VELOCITY_DISSIPATION!,
-      PRESSURE: PRESSURE!,
-      PRESSURE_ITERATIONS: PRESSURE_ITERATIONS!,
-      CURL: CURL!,
-      SPLAT_RADIUS: SPLAT_RADIUS!,
-      SPLAT_FORCE: SPLAT_FORCE!,
+
+    // Visibility detection
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const wasVisible = isVisibleRef.current;
+        isVisibleRef.current = entry.isIntersecting;
+        
+        // Only restart if we're becoming visible and animation was stopped
+        if (entry.isIntersecting && !wasVisible && !animationRef.current) {
+          updateFrame();
+        }
+      },
+      { 
+        threshold: 0.05,
+        rootMargin: '0px 0px -10% 0px'
+      }
+    );
+
+    observer.observe(canvas);
+
+    let pointers: Pointer[] = [pointerPrototype()];
+    let splatStack: any[] = [];
+    let bloomFramebuffers: any[] = [];
+    let sunrays: any;
+
+    const config = {
+      SIM_RESOLUTION,
+      DYE_RESOLUTION,
+      CAPTURE_RESOLUTION,
+      DENSITY_DISSIPATION,
+      VELOCITY_DISSIPATION,
+      PRESSURE,
+      PRESSURE_ITERATIONS,
+      CURL,
+      SPLAT_RADIUS,
+      SPLAT_FORCE,
       SHADING,
-      COLOR_UPDATE_SPEED: COLOR_UPDATE_SPEED!,
-      PAUSED: false,
+      COLOR_UPDATE_SPEED,
       BACK_COLOR,
       TRANSPARENT,
     };
 
-    const { gl, ext } = getWebGLContext(canvas);
-    if (!gl || !ext) return;
+    const gl = canvas.getContext('webgl2') as WebGL2RenderingContext;
+    if (!gl) return;
 
-    if (!ext.supportLinearFiltering) {
-      config.DYE_RESOLUTION = 256;
-      config.SHADING = false;
-    }
+    const { gl: webgl, ext: webglExt } = getWebGLContext(canvas);
+    const ext = webglExt;
 
     function getWebGLContext(canvas: HTMLCanvasElement) {
       const params = {
@@ -991,13 +1014,20 @@ export default function SplashCursor({
     let colorUpdateTimer = 0.0;
 
     function updateFrame() {
+      // Treat all sections like HeroSection - consistent 60fps performance
+      if (!isVisibleRef.current) {
+        // Only pause when completely not visible
+        animationRef.current = requestAnimationFrame(updateFrame);
+        return;
+      }
+
       const dt = calcDeltaTime();
       if (resizeCanvas()) initFramebuffers();
       updateColors(dt);
       applyInputs();
       step(dt);
       render(null);
-      requestAnimationFrame(updateFrame);
+      animationRef.current = requestAnimationFrame(updateFrame);
     }
 
     function calcDeltaTime() {
@@ -1492,6 +1522,13 @@ export default function SplashCursor({
         updatePointerUpData(pointer);
       }
     });
+
+    return () => {
+      observer.disconnect();
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    };
   }, [
     SIM_RESOLUTION,
     DYE_RESOLUTION,

@@ -12,6 +12,7 @@ interface BoxProps {
   hoveredBox: [number, number] | null;
   rippleScale?: number;
   rippleRadius?: number;
+  materialColor: string;
 }
 
 // Shared geometry untuk mengurangi memory usage
@@ -47,7 +48,7 @@ const createSharedGeometry = (() => {
   };
 })();
 
-const Box = ({ 
+const Box = React.memo(({ 
   position, 
   width = 4, 
   length = 4, 
@@ -55,7 +56,8 @@ const Box = ({
   gridPosition,
   hoveredBox,
   rippleScale = 0.3,
-  rippleRadius = 3
+  rippleRadius = 3,
+  materialColor
 }: BoxProps) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const [currentScale, setCurrentScale] = useState(1);
@@ -107,7 +109,7 @@ const Box = ({
       rotation={[Math.PI / 2, 0, 0]}
     >
       <meshPhysicalMaterial 
-        color="#232323" 
+        color={materialColor}
         roughness={0.5} 
         metalness={1}
         clearcoat={1}
@@ -117,7 +119,9 @@ const Box = ({
       />
     </mesh>
   );
-};
+});
+
+Box.displayName = 'Box';
 
 function HoverDetector({ 
   onHoverChange 
@@ -156,9 +160,10 @@ function HoverDetector({
   return null;
 }
 
-function GridOfBoxes() {
-  const gridSizeX = 16;
-  const gridSizeZ = 10;
+function GridOfBoxes({ materialColor }: { materialColor: string }) {
+  // Slightly reduced grid size for better performance
+  const gridSizeX = 14; // Reduced from 16
+  const gridSizeZ = 9;  // Reduced from 10
   const boxWidth = 4;
   const boxLength = 4;
   const gap = 0.05;
@@ -174,7 +179,7 @@ function GridOfBoxes() {
     setHoveredBox(newHoveredBox);
   }, []);
   
-  // Pre-calculate positions dan memoize boxes
+  // Pre-calculate positions dan memoize boxes - prevent re-renders
   const boxes = useMemo(() => {
     const boxArray: React.ReactNode[] = [];
     
@@ -194,12 +199,13 @@ function GridOfBoxes() {
             hoveredBox={hoveredBox}
             rippleScale={rippleScale}
             rippleRadius={rippleRadius}
+            materialColor={materialColor}
           />
         );
       }
     }
     return boxArray;
-  }, [hoveredBox, gridSizeX, gridSizeZ, spacingX, spacingZ, boxWidth, boxLength, rippleScale, rippleRadius]);
+  }, [hoveredBox, materialColor]); // Only depend on hoveredBox, not other values
 
   return (
     <>
@@ -214,9 +220,52 @@ function GridOfBoxes() {
   );
 }
 
-export default function ChromeGrid() {
+const ChromeGrid = React.memo(() => {
+  const [colors, setColors] = useState({
+    bg: '#00539c',
+    brand: '#96a4d3'
+  });
+
+  useEffect(() => {
+    const updateColors = () => {
+      const computedStyle = getComputedStyle(document.documentElement);
+      const bgValue = computedStyle.getPropertyValue('--bg').trim();
+      const brandValue = computedStyle.getPropertyValue('--brand').trim();
+      
+      // Convert RGB values to hex
+      const rgbToHex = (rgbString: string) => {
+        if (!rgbString) return null;
+        const values = rgbString.split(' ').map(v => parseInt(v.trim()));
+        if (values.length !== 3) return null;
+        return `#${values.map(v => v.toString(16).padStart(2, '0')).join('')}`;
+      };
+      
+      const bgColor = rgbToHex(bgValue) || '#00539c';
+      const brandColor = rgbToHex(brandValue) || '#96a4d3';
+      
+      setColors({
+        bg: bgColor,
+        brand: brandColor
+      });
+    };
+
+    updateColors();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(() => {
+      updateColors();
+    });
+    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="h-full w-full bg-black relative z-5">
+    <div className="h-full w-full relative z-5 pointer-events-auto" style={{ backgroundColor: colors.bg }}>
       <Canvas
         camera={{ 
           position: [-9.31, 12, 24.72], 
@@ -225,10 +274,11 @@ export default function ChromeGrid() {
         }}
         gl={{ 
           antialias: true,
-          alpha: false,
+          alpha: true,
           powerPreference: "high-performance" // Optimize untuk performance
         }}
         dpr={[1, 2]} // Limit device pixel ratio untuk performance
+        style={{ pointerEvents: 'auto', background: 'transparent' }}
       >
         <ambientLight intensity={1} />
         <directionalLight position={[10, 15, 10]} intensity={10} castShadow />
@@ -236,8 +286,12 @@ export default function ChromeGrid() {
         <directionalLight position={[5, -10, 15]} intensity={5} color="#f0f8ff" />
         <pointLight position={[0, 20, 3]} intensity={2} distance={50} />
         <pointLight position={[15, 5, 15]} intensity={1.5} distance={40} color="#ffffff" />
-        <GridOfBoxes />
+        <GridOfBoxes materialColor={colors.brand} />
       </Canvas>
     </div>
   )
-}
+});
+
+ChromeGrid.displayName = 'ChromeGrid';
+
+export default ChromeGrid;

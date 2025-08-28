@@ -3,18 +3,21 @@
 @tailwind utilities;
 
 @layer base {
-  :root{
-    --bg: 0 83 156; 
+  :root {
+    --bg: 0 85 156; 
     --fg: 238 164 127;
     --brand: 150 164 211;  
   }
 
   .dark {
-    --bg: 0 14 27 ;           
+    --bg: 0 14 27;           
     --fg: 214 237 23;    
     --brand: 161 19 18;    
   }
 
   html, body, #root { height: 100%; }
-  body { @apply bg-bg text-fg antialiased; }
+  body { 
+    @apply bg-bg text-fg antialiased;
+    font-family: "Cinzel", serif;
+  }
 }

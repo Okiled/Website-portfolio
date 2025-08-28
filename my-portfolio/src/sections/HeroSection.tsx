@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState, Suspense } from "react";
-import { Github, Linkedin, Mail, ChevronDown, MapPin, Download } from "lucide-react";
+import { Github, Linkedin, Mail, ChevronDown, MapPin, Download, Sparkles, Code, Brain, TrendingUp } from "lucide-react";
 import TextScramble from "../animations/TextScramble";
 import { RevealWrapper, StaggeredReveal } from "../animations/RevealAnimations";
 
@@ -21,13 +21,18 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
   );
 
   const specialties = useMemo(
-    () => ["Artificial Intelligence", "Quantitative Finance", "Full-Stack Development"],
+    () => [
+      { text: "Artificial Intelligence", icon: Brain },
+      { text: "Quantitative Finance", icon: TrendingUp },
+      { text: "Full-Stack Development", icon: Code }
+    ],
     []
   );
 
   const sectionRef = useRef<HTMLElement | null>(null);
   const [visible, setVisible] = useState(false);
   const [gridReady, setGridReady] = useState(false);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -47,19 +52,76 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
     return () => cic(id);
   }, []);
 
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const rect = sectionRef.current?.getBoundingClientRect();
+      if (rect) {
+        setMousePosition({
+          x: (e.clientX - rect.left) / rect.width,
+          y: (e.clientY - rect.top) / rect.height,
+        });
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
   return (
     <section
       id="home"
       ref={sectionRef}
-      className="min-h-screen flex items-center justify-center relative overflow-hidden isolate [content-visibility:auto] [contain-intrinsic-size:900px]"
+      className="min-h-screen flex items-center justify-center relative overflow-hidden isolate [content-visibility:auto] [contain-intrinsic-size:900px] group"
       data-visible={visible}
     >
       <style>{`
         [data-visible="false"] .parallax-layer{opacity:.999;transform:none}
         @media (prefers-reduced-motion: reduce){
           .parallax-layer{transform:none!important}
+          .floating-element{animation:none!important}
+          .mouse-track{transform:none!important}
         }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          33% { transform: translateY(-10px) rotate(1deg); }
+          66% { transform: translateY(5px) rotate(-1deg); }
+        }
+        .floating-element { animation: float 6s ease-in-out infinite; }
+        .floating-element:nth-child(2) { animation-delay: -2s; }
+        .floating-element:nth-child(3) { animation-delay: -4s; }
       `}</style>
+
+      <div className="absolute inset-0 pointer-events-none z-10 overflow-hidden">
+        <div
+          className="floating-element absolute w-20 h-20 opacity-20"
+          style={{
+            top: "15%",
+            left: "10%",
+            transform: `translate(${mousePosition.x * 20}px, ${mousePosition.y * 20}px)`
+          }}
+        >
+          <div className="w-full h-full rounded-full bg-[rgb(var(--fg)/0.2)] blur-xl" />
+        </div>
+        <div
+          className="floating-element absolute w-32 h-32 opacity-10"
+          style={{
+            top: "70%",
+            right: "15%",
+            transform: `translate(${mousePosition.x * -15}px, ${mousePosition.y * -15}px)`
+          }}
+        >
+          <div className="w-full h-full rounded-full bg-[rgb(var(--fg)/0.3)] blur-2xl" />
+        </div>
+        <div
+          className="floating-element absolute w-16 h-16 opacity-30"
+          style={{
+            top: "40%",
+            right: "20%",
+            transform: `translate(${mousePosition.x * 10}px, ${mousePosition.y * 10}px)`
+          }}
+        >
+          <Sparkles className="w-full h-full text-fg" />
+        </div>
+      </div>
 
       <div className="absolute inset-0 z-0 pointer-events-auto">
         {gridReady && (
@@ -69,64 +131,76 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
         )}
       </div>
 
-      {/* overlay tanpa gradient (transparan, hanya parallax translate) */}
       <div
         className="absolute inset-0 z-20 pointer-events-none will-change-transform parallax-layer"
-        style={{ transform: `translate3d(0, ${visible ? scrollY * 0.1 : 0}px, 0)` }}
+        style={{
+          transform: `translate3d(0, ${visible ? scrollY * 0.1 : 0}px, 0)`,
+          background: `radial-gradient(ellipse at ${mousePosition.x * 100}% ${mousePosition.y * 100}%, rgb(var(--fg)/0.05) 0%, transparent 50%)`
+        }}
       />
 
       <div className="container mx-auto px-6 relative z-40 max-w-6xl pointer-events-auto">
-        <RevealWrapper animation="fadeIn" delay={100} className="text-center mb-16" triggerOnce={false} threshold={0.3}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 mt-12 bg-[rgb(var(--surface)/0.6)] border border-borderc/40 rounded-full shadow">
-            <div className="w-2 h-2 bg-[rgb(var(--accent))] rounded-full animate-pulse" />
-            <span className="text-sm font-medium text-content">Open for opportunities</span>
+        <RevealWrapper animation="fadeIn" delay={100} className="text-center mb-16">
+          <div className="inline-flex items-center gap-3 px-5 py-3 mt-12 bg-[rgb(var(--bg)/0.8)] backdrop-blur-sm border border-[rgb(var(--fg)/0.2)] rounded-full shadow-lg">
+            <div className="relative">
+              <div className="w-3 h-3 bg-fg rounded-full animate-pulse" />
+              <div className="absolute inset-0 w-3 h-3 bg-fg rounded-full animate-ping opacity-75" />
+            </div>
+            <span className="text-sm font-medium text-fg">Open for opportunities</span>
+            <Sparkles className="w-4 h-4 opacity-70 text-fg" />
           </div>
         </RevealWrapper>
 
-        <div className="text-center mb-16">
-          <RevealWrapper animation="fadeIn" delay={200} className="mb-8" triggerOnce={false} threshold={0.3}>
-            <div className="text-md uppercase tracking-widest text-content/70 font-bold mb-4">Portfolio</div>
-            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight">
-              <TextScramble text="DELIKO HARTONO" className="text-primary" />
+        <div className="text-center mb-20">
+          <RevealWrapper animation="fadeIn" delay={200} className="mb-8">
+            <div className="text-md uppercase tracking-widest text-fg/70 font-bold mb-6 relative">
+              <span className="relative z-10">Portfolio</span>
+              <div className="absolute inset-x-0 bottom-0 h-px bg-[rgb(var(--fg)/0.3)]" />
+            </div>
+            <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight relative text-fg">
+              <TextScramble text="DELIKO HARTONO" className="relative z-10 text-fg" />
             </h1>
           </RevealWrapper>
 
-          <RevealWrapper animation="slideUp" delay={400} className="mb-8" triggerOnce={false} threshold={0.3}>
-            <div className="inline-flex items-center gap-2 px-6 py-3 bg-[rgb(var(--surface)/0.5)] border border-borderc/30 rounded-full">
-              <span className="text-lg sm:text-xl font-medium text-content">Information Technology Student</span>
+          <RevealWrapper animation="slideUp" delay={400} className="mb-10">
+            <div className="group inline-flex items-center gap-3 px-8 py-4 bg-[rgb(var(--bg)/0.6)] backdrop-blur-sm border border-[rgb(var(--fg)/0.2)] rounded-2xl shadow-lg">
+              <Code className="w-5 h-5 text-fg" />
+              <span className="text-lg sm:text-xl font-medium text-fg">Information Technology Student</span>
             </div>
           </RevealWrapper>
 
-          <RevealWrapper animation="fadeIn" delay={600} className="max-w-4xl mx-auto" triggerOnce={false} threshold={0.3}>
-            <div className="flex flex-wrap items-center justify-center gap-2 text-lg sm:text-xl text-content/80">
-              <span>Passionate about</span>
-              {specialties.map((specialty, index) => (
-                <React.Fragment key={specialty}>
-                  <span className={`font-semibold ${index === 1 ? "text-content" : "text-primary"}`}>
-                    {specialty}
-                  </span>
-                  {index < specialties.length - 1 && <span className="text-content/50">•</span>}
-                </React.Fragment>
-              ))}
+          <RevealWrapper animation="fadeIn" delay={600} className="max-w-4xl mx-auto mb-12">
+            <div className="flex flex-col gap-6">
+              <div className="text-lg sm:text-xl text-fg mb-4">
+                <span>Passionate about</span>
+              </div>
+              <StaggeredReveal
+                staggerDelay={150}
+                animation="slideUp"
+                baseDelay={700}
+                className="flex flex-wrap items-center justify-center gap-4"
+              >
+                {specialties.map(({ text, icon: Icon }) => (
+                  <div
+                    key={text}
+                    className="group relative flex items-center gap-3 px-6 py-3 bg-[rgb(var(--bg)/0.5)] backdrop-blur-sm border border-[rgb(var(--fg)/0.2)] rounded-xl transition-all duration-300"
+                  >
+                    <Icon className="w-5 h-5 text-fg" />
+                    <span className="font-semibold text-fg">{text}</span>
+                  </div>
+                ))}
+              </StaggeredReveal>
             </div>
           </RevealWrapper>
         </div>
 
-        <RevealWrapper
-          animation="slideUp"
-          delay={800}
-          className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-16"
-          triggerOnce={false}
-          threshold={0.3}
-        >
+        <RevealWrapper animation="slideUp" delay={800} className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-20">
           <div className="mt-4">
             <StaggeredReveal
               staggerDelay={100}
               animation="scaleIn"
               baseDelay={900}
-              triggerOnce={false}
-              threshold={0.3}
-              className="grid grid-flow-col auto-cols-max gap-3 sm:gap-4 justify-start sm:justify-center"
+              className="grid grid-flow-col auto-cols-max gap-4 sm:gap-6"
             >
               {socialLinks.map(({ icon: Icon, href, label }) => (
                 <a
@@ -135,61 +209,58 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
                   aria-label={label}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative inline-flex size-12 sm:size-14 items-center justify-center rounded-2xl border border-borderc/30 bg-[rgb(var(--surface)/0.6)] transition-all duration-300 hover:bg-[rgb(var(--surface)/0.7)] hover:border-[rgb(var(--primary)/0.4)] hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--primary)/0.6)]"
+                  className="group relative inline-flex size-14 sm:size-16 items-center justify-center rounded-2xl border border-[rgb(var(--fg)/0.2)] bg-[rgb(var(--bg)/0.6)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
-                  <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-content group-hover:text-primary transition-colors duration-200" />
+                  <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-fg group-hover:scale-110 transition-all duration-300" />
                   <span className="sr-only">{label}</span>
                 </a>
               ))}
             </StaggeredReveal>
           </div>
 
-          <div className="h-px w-12 sm:h-8 sm:w-px bg-[rgb(var(--content)/0.4)]" />
+          <div className="h-px w-16 sm:h-12 sm:w-px bg-[rgb(var(--fg)/0.4)]" />
 
-          <RevealWrapper animation="slideLeft" delay={1200} triggerOnce={false} threshold={0.3}>
-            <button className="group flex items-center gap-3 px-6 py-4 bg-primary border border-[rgb(var(--primary)/0.5)] rounded-xl hover:bg-[rgb(var(--primary)/0.9)] transition-all duration-300">
-              <Download className="w-4 h-4 text-surface" />
-              <span className="text-sm font-medium text-surface">Download Resume</span>
+          <RevealWrapper animation="slideLeft" delay={1200}>
+            <button className="group relative flex items-center gap-3 px-8 py-4 bg-fg border border-[rgb(var(--fg)/0.5)] rounded-xl shadow-lg">
+              <Download className="w-5 h-5 text-bg" />
+              <span className="text-sm font-medium text-bg">Download Resume</span>
             </button>
           </RevealWrapper>
         </RevealWrapper>
 
-        <RevealWrapper
-          animation="fadeIn"
-          delay={1800}
-          className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-20"
-          triggerOnce={false}
-          threshold={0.3}
-        >
-          <div className="flex items-center gap-2 px-4 py-2 bg-[rgb(var(--surface)/0.5)] border border-borderc/30 rounded-full">
-            <MapPin className="w-4 h-4 text-primary" />
-            <span className="text-sm text-content/80">Jakarta, Indonesia</span>
+        <RevealWrapper animation="fadeIn" delay={1800} className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-24">
+          <div className="flex items-center gap-3 px-6 py-3 bg-[rgb(var(--bg)/0.6)] backdrop-blur-sm border border-[rgb(var(--fg)/0.2)] rounded-full">
+            <MapPin className="w-5 h-5 animate-pulse text-fg" />
+            <span className="text-sm text-fg">Jakarta, Indonesia</span>
           </div>
 
-          <div className="h-px w-8 bg-[rgb(var(--content)/0.4)] hidden sm:block" />
+          <div className="h-px w-12 bg-[rgb(var(--fg)/0.4)] hidden sm:block" />
 
           <div className="grid grid-cols-2 gap-8">
             {[{ label: "Years Experience", value: "2+" }, { label: "Projects Completed", value: "2+" }].map(
               ({ label, value }) => (
-                <div key={label} className="text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">{value}</div>
-                  <div className="text-xs text-content/70">{label}</div>
+                <div key={label} className="text-center group">
+                  <div className="text-3xl font-bold text-fg mb-2">{value}</div>
+                  <div className="text-xs text-fg uppercase tracking-wider">{label}</div>
                 </div>
               )
             )}
           </div>
         </RevealWrapper>
 
-        <RevealWrapper animation="fadeIn" delay={2000} className="text-center" triggerOnce={false} threshold={0.3}>
+        <RevealWrapper animation="fadeIn" delay={2000} className="text-center">
           <button
             onClick={() => scrollToSection("about")}
-            className="group flex flex-col items-center gap-2 text-content/70 hover:text-content transition-all duration-300 mx-auto"
+            className="group flex flex-col items-center gap-3 text-fg transition-all duration-300 mx-auto"
             aria-label="Scroll to About section"
           >
             <span className="text-xs font-medium uppercase tracking-wider">Scroll Down</span>
-            <div className="flex flex-col gap-1 items-center">
-              <ChevronDown className="w-5 h-5 text-primary" />
-              <div className="w-px h-8 bg-[rgb(var(--content)/0.6)] group-hover:bg-[rgb(var(--content))] transition-colors duration-300" />
+            <div className="flex flex-col gap-2 items-center">
+              <div className="relative">
+                <ChevronDown className="w-6 h-6 text-fg group-hover:translate-y-1 transition-transform duration-300" />
+                <ChevronDown className="w-6 h-6 text-fg absolute top-0 opacity-50 group-hover:translate-y-2 transition-transform duration-300 delay-75" />
+              </div>
+              <div className="w-px h-8 bg-[rgb(var(--fg)/0.6)]" />
             </div>
           </button>
         </RevealWrapper>

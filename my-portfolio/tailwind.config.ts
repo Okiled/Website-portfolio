@@ -13,6 +13,9 @@ export default {
       ringColor: {
         DEFAULT: "rgb(var(--brand) / <alpha-value>)",
       },
+      fontFamily: {
+        cinzel: ["Craw Modern", "serif"],
+      },
     },
   },
   plugins: [],

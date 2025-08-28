@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import  ThemeProvider  from '../src/context/ThemeProvider'; // pastikan path sesuai
+import ThemeProvider from '../src/context/ThemeProvider';
 import LoadingScreen from '../src/components/LoadingScreen';
 import Navigation from '../src/components/Navigation';
 import HeroSection from '../src/sections/HeroSection';
@@ -9,7 +9,7 @@ import ProjectsSection from '../src/sections/Projects';
 import SkillsSection from '../src/sections/Skills';
 import ContactSection from '../src/sections/Contact';
 import Footer from '../src/components/Footer';
-// import SplashCursor from '../src/animations/SplashCursor'; // kalau dipakai, tetap import
+import PixelTrail from './animations/Cursor';
 
 const App: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,6 +17,12 @@ const App: React.FC = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [showLoading, setShowLoading] = useState(true);
   const [scrollY, setScrollY] = useState(0);
+
+  // << NEW: sumber event untuk R3F supaya canvas bisa pointer-events:none
+  const [eventSource, setEventSource] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setEventSource(document.body);
+  }, []);
 
   const handleLoadingComplete = () => {
     setShowLoading(false);
@@ -77,7 +83,8 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <div className="min-h-screen relative overflow-x-hidden bg-surface text-content transition-colors duration-300">
-        <div className="fixed inset-0 pointer-events-none z-[9999]" aria-hidden="true" />
+        {/* >>> HAPUS layer -z-10; pakai layer normal untuk konten */}
+        {/* Layer UI utama */}
         <Navigation
           activeSection={activeSection}
           isMenuOpen={isMenuOpen}
@@ -92,6 +99,23 @@ const App: React.FC = () => {
         <SkillsSection />
         <ContactSection />
         <Footer activeSection={activeSection} scrollToSection={scrollToSection} />
+        <div className="fixed inset-0 z-[2]">
+          <PixelTrail
+            gridSize={83}
+            trailSize={0.05}
+            maxAge={300}
+            interpolate={3.7}
+            color="#00fffb"
+            gooeyFilter={{ id: 'custom-goo-filter', strength: 2 }}
+            className="inset-0 pointer-events-none"
+            canvasProps={
+              eventSource
+                ? { eventSource, eventPrefix: 'client' }
+                : undefined
+            }
+          />
+        </div>
+        <div className="fixed inset-0 pointer-events-none z-[9999]" aria-hidden="true" />
       </div>
     </ThemeProvider>
   );

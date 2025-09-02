@@ -83,8 +83,7 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <div className="min-h-screen relative overflow-x-hidden bg-surface text-content transition-colors duration-300">
-        {/* >>> HAPUS layer -z-10; pakai layer normal untuk konten */}
-        {/* Layer UI utama */}
+
         <Navigation
           activeSection={activeSection}
           isMenuOpen={isMenuOpen}
@@ -99,22 +98,6 @@ const App: React.FC = () => {
         <SkillsSection />
         <ContactSection />
         <Footer activeSection={activeSection} scrollToSection={scrollToSection} />
-        <div className="fixed inset-0 z-[2]">
-          <PixelTrail
-            gridSize={83}
-            trailSize={0.05}
-            maxAge={300}
-            interpolate={3.7}
-            color="#00fffb"
-            gooeyFilter={{ id: 'custom-goo-filter', strength: 2 }}
-            className="inset-0 pointer-events-none"
-            canvasProps={
-              eventSource
-                ? { eventSource, eventPrefix: 'client' }
-                : undefined
-            }
-          />
-        </div>
         <div className="fixed inset-0 pointer-events-none z-[9999]" aria-hidden="true" />
       </div>
     </ThemeProvider>

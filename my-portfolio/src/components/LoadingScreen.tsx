@@ -136,28 +136,40 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
   }
 
   function applyCircularMask(el: HTMLElement, inner = 0.60, fade = 0.75) {
-    const mask = `radial-gradient(circle at 50% 50%, #000 ${inner * 100}%, transparent ${fade * 100}%)`;
+    const mask = `radial-gradient(circle at 50% 50%, #000 ${inner * 100}%, rgba(0,0,0,0.999) ${Math.min(99, fade * 100 - 1)}%, transparent ${fade * 100}%)`;
     (el.style as any).webkitMaskImage = mask;
     (el.style as any).maskImage = mask;
+    (el.style as any).maskRepeat = "no-repeat";
+    (el.style as any).webkitMaskRepeat = "no-repeat";
+    (el.style as any).maskPosition = "50% 50%";
+    (el.style as any).webkitMaskPosition = "50% 50%";
+    (el.style as any).maskSize = "cover";
+    (el.style as any).webkitMaskSize = "cover";
+    (el.style as any).maskMode = "luminance";
+    (el.style as any).willChange = "transform, opacity";
+    (el.style as any).backfaceVisibility = "hidden";
+    (el.style as any).transform = "translateZ(0)";
   }
 
   function ensureNoiseOverlay() {
     if (noiseRef.current) return;
     const d = document.createElement("div");
-    d.className = "pointer-events-none fixed inset-0 z-[9998] opacity-5 mix-blend-overlay";
-    const size = 96;
+    d.className = "pointer-events-none fixed inset-0 z-[9998] opacity-10 mix-blend-overlay";
+    const size = 256;
     const c = document.createElement("canvas");
     c.width = size; c.height = size;
-    const ctx = c.getContext("2d", { willReadFrequently: false })!;
+    const ctx = c.getContext("2d")!;
     const img = ctx.createImageData(size, size);
     for (let i = 0; i < img.data.length; i += 4) {
       const v = (Math.random() * 255) | 0;
-      img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = v; img.data[i + 3] = 18;
+      img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = v;
+      img.data[i + 3] = 10 + ((i / 4) % 7); // subtle dither to kill banding tanpa kotak
     }
     ctx.putImageData(img, 0, 0);
     d.style.backgroundImage = `url(${c.toDataURL()})`;
-    d.style.backgroundSize = "64px 64px";
+    d.style.backgroundSize = "512px 512px";  // tile besar supaya tidak terlihat grid
     d.style.backgroundRepeat = "repeat";
+    d.style.imageRendering = "auto";
     rootRef.current?.appendChild(d);
     noiseRef.current = d;
   }
@@ -185,6 +197,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     line.setAttribute("stroke-miterlimit", "1");
     line.setAttribute("data-element", "main-line");
     line.setAttribute("data-branch", String(branchIndex));
+    (line.style as any).shapeRendering = "geometricPrecision";
     g.appendChild(line);
     stateRef.current.animationElements.push(line);
 
@@ -212,6 +225,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
         branch.setAttribute("data-branch", String(branchIndex));
         branch.setAttribute("data-side", side);
         branch.setAttribute("data-offset", String(offIndex));
+        (branch.style as any).shapeRendering = "geometricPrecision";
         g.appendChild(branch);
         stateRef.current.animationElements.push(branch);
       });
@@ -236,6 +250,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     hex.setAttribute("stroke-miterlimit", "1");
     hex.setAttribute("data-element", "hex");
     hex.setAttribute("data-branch", String(branchIndex));
+    (hex.style as any).shapeRendering = "geometricPrecision";
     g.appendChild(hex);
     stateRef.current.animationElements.push(hex);
     stateRef.current.hexElements.push(hex);
@@ -251,6 +266,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     txt.setAttribute("text-anchor", "middle");
     txt.setAttribute("dominant-baseline", "central");
     txt.setAttribute("font-family", "serif");
+    (txt.style as any).textRendering = "geometricPrecision";
     txt.textContent = text;
     g.appendChild(txt);
     stateRef.current.animationElements.push(txt);
@@ -270,6 +286,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
       ext.setAttribute("stroke-miterlimit", "1");
       ext.setAttribute("data-element", "extension");
       ext.setAttribute("data-branch", String(branchIndex));
+      (ext.style as any).shapeRendering = "geometricPrecision";
       g.appendChild(ext);
       stateRef.current.animationElements.push(ext);
     }
@@ -286,6 +303,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
       cap.setAttribute("vector-effect", "non-scaling-stroke");
       cap.setAttribute("data-element", "cap");
       cap.setAttribute("data-role", "cap");
+      (cap.style as any).shapeRendering = "geometricPrecision";
       g.appendChild(cap);
       stateRef.current.animationElements.push(cap);
       stateRef.current.capElements.push(cap);
@@ -298,6 +316,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
       capNucleus.setAttribute("opacity", "0");
       capNucleus.setAttribute("data-element", "cap-nucleus");
       capNucleus.setAttribute("data-branch", String(branchIndex));
+      (capNucleus.style as any).shapeRendering = "geometricPrecision";
       g.appendChild(capNucleus);
       stateRef.current.animationElements.push(capNucleus);
     }
@@ -319,16 +338,20 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
 
     defs.innerHTML = `
       <filter id="akaza-glow" x="-60%" y="-60%" width="220%" height="220%">
-        <feGaussianBlur stdDeviation="3" result="c"/>
+        <feGaussianBlur stdDeviation="2.2" result="c"/>
+        <feComponentTransfer>
+          <feFuncA type="linear" slope="1.0" intercept="0"/>
+        </feComponentTransfer>
         <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
       <linearGradient id="line-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" style="stop-color:var(--stroke-color);stop-opacity:1" />
-        <stop offset="100%" style="stop-color:var(--text-color);stop-opacity:0.85" />
+        <stop offset="50%" style="stop-color:var(--text-color);stop-opacity:0.92" />
+        <stop offset="100%" style="stop-color:var(--stroke-color);stop-opacity:0.9" />
       </linearGradient>
       <linearGradient id="hex-gradient" x1="0%" y1="0%" x2="100%">
         <stop offset="0%" style="stop-color:var(--stroke-color);stop-opacity:1" />
-        <stop offset="50%" style="stop-color:var(--text-color);stop-opacity:0.9" />
+        <stop offset="50%" style="stop-color:var(--text-color);stop-opacity:0.95" />
         <stop offset="100%" style="stop-color:var(--stroke-color);stop-opacity:1" />
       </linearGradient>
     `;
@@ -356,6 +379,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     centerDot.setAttribute("stroke-width", String(P.strokeWidth));
     centerDot.setAttribute("vector-effect", "non-scaling-stroke");
     centerDot.setAttribute("data-role", "center");
+    (centerDot.style as any).shapeRendering = "geometricPrecision";
     stateRef.current.animationElements.push(centerDot);
 
     drawSet(layer1, P, "layer1");
@@ -390,8 +414,8 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const compass = compassRef.current!;
     compass.className = [
       "absolute inset-0 pointer-events-none opacity-0 rounded-full z-0",
-      "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,20,147,0.15)_0deg,rgba(255,20,147,0.02)_60deg,rgba(255,20,147,0.15)_120deg,rgba(255,20,147,0.02)_180deg,rgba(255,20,147,0.15)_240deg,rgba(255,20,147,0.02)_300deg,rgba(255,20,147,0.15)_360deg)]",
-      "will-change-transform transform-gpu mix-blend-screen"
+      "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,20,147,0.12)_0deg,rgba(255,20,147,0.02)_60deg,rgba(255,20,147,0.12)_120deg,rgba(255,20,147,0.02)_180deg,rgba(255,20,147,0.12)_240deg,rgba(255,20,147,0.02)_300deg,rgba(255,20,147,0.12)_360deg)]",
+      "will-change-transform transform-gpu"
     ].join(" ");
     applyCircularMask(compass);
 
@@ -406,8 +430,8 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const energyField = energyFieldRef.current!;
     energyField.className = [
       "absolute inset-0 pointer-events-none opacity-0 rounded-full z-0",
-      "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.08)_0%,rgba(255,20,147,0.04)_40%,rgba(255,20,147,0.01)_80%,transparent_100%)]",
-      "mix-blend-screen"
+      "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.07)_0%,rgba(255,20,147,0.035)_40%,rgba(255,20,147,0.012)_80%,transparent_100%)]",
+      "will-change-transform transform-gpu"
     ].join(" ");
     applyCircularMask(energyField);
 
@@ -426,8 +450,8 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const aura = auraRef.current!;
     aura.className = [
       "absolute inset-0 pointer-events-none opacity-0 rounded-full z-10",
-      "bg-[radial-gradient(circle_at_50%_50%,var(--glow-pink-soft)_0%,transparent_70%)]",
-      "mix-blend-screen"
+      "bg-[radial-gradient(circle_at_50%_50%,var(--glow-pink-soft)_0%,transparent_72%)]",
+      "will-change-transform transform-gpu"
     ].join(" ");
     applyCircularMask(aura, 0.55, 0.78);
 
@@ -501,6 +525,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const texts = els.filter(el => el.getAttribute("data-element") === "text");
     await Promise.all(texts.map((d, i) => {
       (d as HTMLElement).style.filter = `drop-shadow(0 0 4px ${glowColor})`;
+      (d as HTMLElement).style.textRendering = "geometricPrecision";
       return smoothFadeIn(d, 360, i * nDelay(24, 0.25));
     }));
   }
@@ -568,7 +593,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
       ring.className = [
         "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
         "pointer-events-none aspect-square h-[60vmin] rounded-full",
-        "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.15)_0%,rgba(255,20,147,0.05)_70%,transparent_100%)]",
+        "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.15)_0%,rgba(255,20,147,0.06)_70%,transparent_100%)]",
         "will-change-transform transform-gpu"
       ].join(" ");
       explosionContainer.appendChild(ring);
@@ -624,7 +649,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
       particle.className = [
         "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
         `h-[${size}vh] w-[${size}vh] rounded-full`,
-        "bg-[radial-gradient(circle,rgba(255,105,180,0.9)_0%,rgba(255,105,180,0.3)_60%,transparent_100%)]",
+        "bg-[radial-gradient(circle,rgba(255,105,180,0.9)_0%,rgba(255,105,180,0.35)_60%,transparent_100%)]",
         `rotate-[${angle}deg]`,
         "will-change-transform transform-gpu"
       ].join(" ");
@@ -687,24 +712,24 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     if (compassRef.current) {
       compassRef.current.className = [
         "absolute inset-0 pointer-events-none opacity-0 rounded-full z-0",
-        "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(0,229,255,0.15)_0deg,rgba(0,229,255,0.02)_60deg,rgba(0,229,255,0.15)_120deg,rgba(0,229,255,0.02)_180deg,rgba(0,229,255,0.15)_240deg,rgba(0,229,255,0.02)_300deg,rgba(0,229,255,0.15)_360deg)]",
-        "mix-blend-screen"
+        "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(0,229,255,0.12)_0deg,rgba(0,229,255,0.02)_60deg,rgba(0,229,255,0.12)_120deg,rgba(0,229,255,0.02)_180deg,rgba(0,229,255,0.12)_240deg,rgba(0,229,255,0.02)_300deg,rgba(0,229,255,0.12)_360deg)]",
+        "will-change-transform transform-gpu"
       ].join(" ");
       applyCircularMask(compassRef.current);
     }
     if (energyFieldRef.current) {
       energyFieldRef.current.className = [
         "absolute inset-0 pointer-events-none opacity-0 rounded-full z-0",
-        "bg-[radial-gradient(circle_at_50%_50%,rgba(0,229,255,0.08)_0%,rgba(0,229,255,0.04)_40%,rgba(0,229,255,0.01)_80%,transparent_100%)]",
-        "mix-blend-screen"
+        "bg-[radial-gradient(circle_at_50%_50%,rgba(0,229,255,0.07)_0%,rgba(0,229,255,0.035)_40%,rgba(0,229,255,0.012)_80%,transparent_100%)]",
+        "will-change-transform transform-gpu"
       ].join(" ");
       applyCircularMask(energyFieldRef.current);
     }
     if (auraRef.current) {
       auraRef.current.className = [
         "absolute inset-0 pointer-events-none opacity-0 rounded-full z-10",
-        "bg-[radial-gradient(circle_at_50%_50%,var(--glow-blue-soft)_0%,transparent_70%)]",
-        "mix-blend-screen"
+        "bg-[radial-gradient(circle_at_50%_50%,var(--glow-blue-soft)_0%,transparent_72%)]",
+        "will-change-transform transform-gpu"
       ].join(" ");
       applyCircularMask(auraRef.current, 0.55, 0.78);
     }
@@ -874,24 +899,24 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     if (compassRef.current) {
       compassRef.current.className = [
         "absolute inset-0 pointer-events-none opacity-0 z-0",
-        "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,20,147,0.15)_0deg,rgba(255,20,147,0.02)_60deg,rgba(255,20,147,0.15)_120deg,rgba(255,20,147,0.02)_180deg,rgba(255,20,147,0.15)_240deg,rgba(255,20,147,0.02)_300deg,rgba(255,20,147,0.15)_360deg)]",
-        "mix-blend-screen"
+        "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,20,147,0.12)_0deg,rgba(255,20,147,0.02)_60deg,rgba(255,20,147,0.12)_120deg,rgba(255,20,147,0.02)_180deg,rgba(255,20,147,0.12)_240deg,rgba(255,20,147,0.02)_300deg,rgba(255,20,147,0.12)_360deg)]",
+        "will-change-transform transform-gpu"
       ].join(" ");
       applyCircularMask(compassRef.current);
     }
     if (energyFieldRef.current) {
       energyFieldRef.current.className = [
-        "absolute inset-0 pointer-events-none opacity-0 z-0",
-        "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.08)_0%,rgba(255,20,147,0.04)_40%,rgba(255,20,147,0.01)_80%,transparent_100%)]",
-        "mix-blend-screen"
+        "absolute inset-0 pointer-events-none opacity-0 z-0 rounded-full",
+        "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.07)_0%,rgba(255,20,147,0.035)_40%,rgba(255,20,147,0.012)_80%,transparent_100%)]",
+        "will-change-transform transform-gpu"
       ].join(" ");
       applyCircularMask(energyFieldRef.current);
     }
     if (auraRef.current) {
       auraRef.current.className = [
-        "absolute inset-0 pointer-events-none opacity-0 z-10",
-        "bg-[radial-gradient(circle_at_50%_50%,var(--glow-pink-soft)_0%,transparent_70%)]",
-        "mix-blend-screen"
+        "absolute inset-0 pointer-events-none opacity-0 z-10 rounded-full",
+        "bg-[radial-gradient(circle_at_50%_50%,var(--glow-pink-soft)_0%,transparent_72%)]",
+        "will-change-transform transform-gpu"
       ].join(" ");
       applyCircularMask(auraRef.current, 0.55, 0.78);
     }
@@ -947,7 +972,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
   return (
     <div
       ref={rootRef}
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-visible bg-black ${exiting ? "pointer-events-none" : ""}`}
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-visible bg-blue ${exiting ? "pointer-events-none" : ""}`}
       style={rootVars}
       aria-hidden={exiting}
       aria-label="Loading"
@@ -967,6 +992,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
           aria-label="Loading Animation"
           className="w-[min(70vw,70vh)] h-[min(70vw,70vh)] z-10"
           shapeRendering="geometricPrecision"
+          style={{ textRendering: "geometricPrecision" }}
         >
           <circle ref={centerDotRef} cx="0" cy="0" r="12" data-role="center" />
           <g ref={layer1Ref}></g>

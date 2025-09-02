@@ -133,9 +133,9 @@ interface DockConfig {
 }
 const DEFAULT_DOCK: DockConfig = {
   baseSize: 54,
-  maxScale: 2.6,
-  influence: 140,
-  lift: 36,
+  maxScale: 1.8,
+  influence: 120,
+  lift: 24,
   spring: 0.22,
 };
 
@@ -436,16 +436,18 @@ const Dock: React.FC<DockProps> = ({
               <div className="relative">
                 {item.isTheme ? <div ref={themeBtnRef}>{button}</div> : button}
                 
-                {/* Enhanced tooltip - follows icon movement */}
+                {/* Tooltip yang mengikuti icon movement */}
                 <div
-                  className={`pointer-events-none absolute left-1/2 -translate-x-1/2 z-30
+                  className={`pointer-events-none absolute left-1/2 z-30
                   ${hoveredItem === item.id 
-                    ? 'opacity-100 translate-y-0 scale-100' 
-                    : 'opacity-0 translate-y-2 scale-90'
+                    ? 'opacity-100' 
+                    : 'opacity-0'
                   }
                   transition-all duration-300 ease-out`}
                   style={{
-                    top: `${cfgRef.current.baseSize + (isTop ? (animValues.current[idx]?.lift || 0) : -(animValues.current[idx]?.lift || 0)) + 12}px`
+                    top: `${cfgRef.current.baseSize + 4}px`,
+                    left: '50%',
+                    transform: `translate(-50%, ${isTop ? (animValues.current[idx]?.lift || 0) : -(animValues.current[idx]?.lift || 0)}px) ${hoveredItem === item.id ? 'scale(1)' : 'scale(0.9) translateY(8px)'}`
                   }}
                 >
                   <div
@@ -647,9 +649,9 @@ const Navigation: React.FC<NavigationProps> = ({
                     }}
                     config={{
                       baseSize: 48,
-                      maxScale: 2.4,
-                      influence: 160,
-                      lift: 30,
+                      maxScale: 1.6,
+                      influence: 140,
+                      lift: 20,
                     }}
                     isTop={true}
                   />

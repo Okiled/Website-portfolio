@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import { BookOpen, Star, User, GraduationCap, Code2 } from "lucide-react";
 import { useGlowEffect as useGlowEffectHook } from "@/components/GlowEffect";
+import TextJalan from "@/animations/TextJalan";
 
 // Optimized ProfileBadge with better responsive design
 const ProfileBadge = memo(() => (
@@ -164,24 +165,13 @@ const About: React.FC = () => {
   return (
     <section
       id="about"
-      className="py-8 xs:py-12 sm:py-16 md:py-20 lg:py-24 relative overflow-hidden isolate"
+      className="py-2 xs:py-12 sm:py-16 md:py-20 lg:py- relative overflow-hidden isolate"
     >
       <style dangerouslySetInnerHTML={{ __html: glowCSS }} />
 
       <BackgroundLayers />
-
+      <TextJalan/>
       <div className="container mx-auto px-3 xs:px-4 sm:px-6 lg:px-8 relative z-10 max-w-7xl">
-        <div className="text-center mb-8 xs:mb-12 sm:mb-16 md:mb-20">
-          <ProfileBadge />
-          <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-bold text-foreground mb-2 xs:mb-3 sm:mb-4 px-2 xs:px-4">
-            About Me
-          </h2>
-          <p className="text-sm xs:text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-2 xs:px-4">
-            Passionate about bridging technology and finance through innovative
-            solutions
-          </p>
-        </div>
-
         <div className="w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 xs:gap-8 sm:gap-10 md:gap-12 items-start">
             <div className="space-y-4 xs:space-y-6 sm:space-y-8 w-full">

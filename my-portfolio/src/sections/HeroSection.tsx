@@ -3,7 +3,7 @@ import { Github, Linkedin, Mail, ChevronDown, MapPin, Download, Sparkles, Code, 
 import TextScramble from "../animations/TextScramble";
 import { RevealWrapper, StaggeredReveal } from "../animations/RevealAnimations";
 
-const ChromeGridLazy = React.lazy(() => import("../animations/ChromeGrid"));
+const ChromeGridLazy = React.lazy(() => import("../animations/BackgroundPaths"));
 
 interface HeroSectionProps {
   scrollY: number;
@@ -140,16 +140,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
       />
 
       <div className="container mx-auto px-6 relative z-40 max-w-6xl pointer-events-auto">
-        <RevealWrapper animation="fadeIn" delay={100} className="text-center mb-16">
-          <div className="inline-flex items-center gap-3 px-5 py-3 mt-12 bg-[rgb(var(--bg)/0.8)] backdrop-blur-sm border border-[rgb(var(--fg)/0.2)] rounded-full shadow-lg">
-            <div className="relative">
-              <div className="w-3 h-3 bg-fg rounded-full animate-pulse" />
-              <div className="absolute inset-0 w-3 h-3 bg-fg rounded-full animate-ping opacity-75" />
-            </div>
-            <span className="text-sm font-medium text-fg">Open for opportunities</span>
-            <Sparkles className="w-4 h-4 opacity-70 text-fg" />
-          </div>
-        </RevealWrapper>
 
         <div className="text-center mb-20">
           <RevealWrapper animation="fadeIn" delay={200} className="mb-8">

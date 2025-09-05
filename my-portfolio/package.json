@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@motionone/utils": "^10.18.0",
     "@react-three/drei": "10.6",
     "@react-three/fiber": "9.3",
     "@splinetool/loader": "^1.10.44",

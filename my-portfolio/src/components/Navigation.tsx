@@ -43,7 +43,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
   const { theme, toggleTheme } = useTheme();
   const { icon } = sizeClasses[size];
   const isDark = theme === "dark";
-  
+
   if (variant === "icon") {
     return (
       <button
@@ -161,7 +161,7 @@ const Dock: React.FC<DockProps> = ({
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  
+
   useEffect(() => {
     const onResize = () => setVw(window.innerWidth);
     window.addEventListener("resize", onResize, {
@@ -169,7 +169,7 @@ const Dock: React.FC<DockProps> = ({
     } as AddEventListenerOptions);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-  
+
   cfgRef.current.baseSize = useMemo(() => {
     if (vw < 360) return 40;
     if (vw < 480) return 44;
@@ -182,8 +182,12 @@ const Dock: React.FC<DockProps> = ({
   const slotRefs = useRef<(HTMLDivElement | null)[]>([]);
   const centersRef = useRef<number[]>([]);
   const rafRef = useRef<number | null>(null);
-  const animTargets = useRef<{ scale: number; lift: number; slot: number }[]>([]);
-  const animValues = useRef<{ scale: number; lift: number; slot: number }[]>([]);
+  const animTargets = useRef<{ scale: number; lift: number; slot: number }[]>(
+    []
+  );
+  const animValues = useRef<{ scale: number; lift: number; slot: number }[]>(
+    []
+  );
   const themeBtnRef = useRef<HTMLDivElement | null>(null);
 
   const measure = useCallback(() => {
@@ -193,7 +197,7 @@ const Dock: React.FC<DockProps> = ({
       return r.left + r.width / 2;
     });
   }, []);
-  
+
   useLayoutEffect(() => {
     measure();
     const onResize = () => {
@@ -329,7 +333,7 @@ const Dock: React.FC<DockProps> = ({
           const isHovered = hoveredItem === item.id;
           const Icon = item.icon;
           const base = cfgRef.current.baseSize;
-          
+
           const button = (
             <button
               ref={(el) => (btnRefs.current[idx] = el)}
@@ -354,7 +358,6 @@ const Dock: React.FC<DockProps> = ({
                     }, 0.45), inset 0 1px 0 rgba(255,255,255,0.22), 0 0 0 1px rgba(255,255,255,0.08)`
                   : "0 3px 12px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.08)",
               }}
-              title={item.name}
               aria-current={isActive ? "page" : undefined}
               aria-keyshortcuts={item.shortcut}
             >
@@ -385,8 +388,7 @@ const Dock: React.FC<DockProps> = ({
                   )
                 )}
               </div>
-              
-              {/* Active indicator - enhanced */}
+
               {isActive && (
                 <div
                   className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full"
@@ -398,19 +400,20 @@ const Dock: React.FC<DockProps> = ({
                   }}
                 />
               )}
-              
-              {/* Ripple effect on hover */}
+
               {isHovered && !item.isTheme && (
                 <div
                   className="absolute inset-0 rounded-2xl opacity-20 animate-ping"
                   style={{
-                    backgroundColor: isDark ? "rgb(214, 237, 23)" : "rgb(238, 164, 127)",
+                    backgroundColor: isDark
+                      ? "rgb(214, 237, 23)"
+                      : "rgb(238, 164, 127)",
                   }}
                 />
               )}
             </button>
           );
-          
+
           return (
             <div
               key={item.id}
@@ -435,72 +438,7 @@ const Dock: React.FC<DockProps> = ({
             >
               <div className="relative">
                 {item.isTheme ? <div ref={themeBtnRef}>{button}</div> : button}
-                
-                {/* Tooltip yang mengikuti icon movement */}
-                <div
-                  className={`pointer-events-none absolute left-1/2 z-30
-                  ${hoveredItem === item.id 
-                    ? 'opacity-100' 
-                    : 'opacity-0'
-                  }
-                  transition-all duration-300 ease-out`}
-                  style={{
-                    top: `${cfgRef.current.baseSize + 4}px`,
-                    left: '50%',
-                    transform: `translate(-50%, ${isTop ? (animValues.current[idx]?.lift || 0) : -(animValues.current[idx]?.lift || 0)}px) ${hoveredItem === item.id ? 'scale(1)' : 'scale(0.9) translateY(8px)'}`
-                  }}
-                >
-                  <div
-                    className="relative rounded-2xl px-5 py-3 text-sm font-semibold ring-1 shadow-2xl backdrop-blur-xl min-w-max"
-                    style={{
-                      backgroundColor: `rgba(${
-                        isDark ? "0, 14, 27" : "0, 83, 156"
-                      }, 0.95)`,
-                      color: `rgb(${isDark ? "214, 237, 23" : "238, 164, 127"})`,
-                      boxShadow: "0 12px 32px rgba(0,0,0,0.4), 0 4px 12px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.1)",
-                      borderColor: `rgba(${
-                        isDark ? "214, 237, 23" : "238, 164, 127"
-                      }, 0.25)`,
-                      borderWidth: 1,
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-base font-medium">{item.name}</span>
-                      {item.shortcut && (
-                        <kbd
-                          className="px-2 py-1 text-xs rounded-lg font-mono font-semibold"
-                          style={{
-                            backgroundColor: `rgba(${
-                              isDark ? "214, 237, 23" : "238, 164, 127"
-                            }, 0.2)`,
-                            color: `rgba(${
-                              isDark ? "214, 237, 23" : "238, 164, 127"
-                            }, 0.9)`,
-                            border: `1px solid rgba(${
-                              isDark ? "214, 237, 23" : "238, 164, 127"
-                            }, 0.3)`,
-                          }}
-                        >
-                          Alt+{item.shortcut}
-                        </kbd>
-                      )}
-                    </div>
-                    <div
-                      className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45"
-                      style={{
-                        backgroundColor: `rgba(${
-                          isDark ? "0, 14, 27" : "0, 83, 156"
-                        }, 0.95)`,
-                        borderTop: `1px solid rgba(${
-                          isDark ? "214, 237, 23" : "238, 164, 127"
-                        }, 0.25)`,
-                        borderLeft: `1px solid rgba(${
-                          isDark ? "214, 237, 23" : "238, 164, 127"
-                        }, 0.25)`,
-                      }}
-                    />
-                  </div>
-                </div>
+                {/* tooltip dihapus */}
               </div>
             </div>
           );
@@ -530,39 +468,40 @@ const Navigation: React.FC<NavigationProps> = ({
   const [w, setW] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
-  
-  // Keyboard shortcuts
+
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
-      // Only trigger if no input is focused and Alt key is pressed
       if (event.altKey && !event.ctrlKey && !event.shiftKey && !event.metaKey) {
-        const activeElement = document.activeElement;
-        if (activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA') {
+        const activeElement = document.activeElement as HTMLElement | null;
+        if (
+          activeElement?.tagName === "INPUT" ||
+          activeElement?.tagName === "TEXTAREA"
+        ) {
           return;
         }
-        
+
         const key = event.key.toUpperCase();
-        const item = menuItems.find(item => item.shortcut === key && !item.isTheme);
-        
+        const item = menuItems.find(
+          (item) => item.shortcut === key && !item.isTheme
+        );
+
         if (item) {
           event.preventDefault();
           scrollToSection(item.id);
-        } else if (key === 'T') {
+        } else if (key === "T") {
           event.preventDefault();
-          // Toggle theme shortcut handled by ThemeToggle
         }
       }
-      
-      // ESC to close mobile menu
-      if (event.key === 'Escape' && isMenuOpen) {
+
+      if (event.key === "Escape" && isMenuOpen) {
         setIsMenuOpen(false);
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
   }, [scrollToSection, isMenuOpen, setIsMenuOpen]);
-  
+
   useEffect(() => {
     const onResize = () => setW(window.innerWidth);
     window.addEventListener("resize", onResize, {
@@ -570,7 +509,7 @@ const Navigation: React.FC<NavigationProps> = ({
     } as AddEventListenerOptions);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-  
+
   const isDesktop = w >= 1024;
 
   return (

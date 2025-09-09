@@ -139,7 +139,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
         }}
       />
 
-      <div className="container mx-auto px-6 relative z-40 max-w-6xl pointer-events-auto">
+      <div className="container mx-auto px-6 relative z-40 max-w-6xl pointer-events-auto mt-20">
 
         <div className="text-center mb-20">
           <RevealWrapper animation="fadeIn" delay={200} className="mb-8">
@@ -238,22 +238,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
           </div>
         </RevealWrapper>
 
-        <RevealWrapper animation="fadeIn" delay={2000} className="text-center">
-          <button
-            onClick={() => scrollToSection("about")}
-            className="group flex flex-col items-center gap-3 text-fg transition-all duration-300 mx-auto"
-            aria-label="Scroll to About section"
-          >
-            <span className="text-xs font-medium uppercase tracking-wider">Scroll Down</span>
-            <div className="flex flex-col gap-2 items-center">
-              <div className="relative">
-                <ChevronDown className="w-6 h-6 text-fg group-hover:translate-y-1 transition-transform duration-300" />
-                <ChevronDown className="w-6 h-6 text-fg absolute top-0 opacity-50 group-hover:translate-y-2 transition-transform duration-300 delay-75" />
-              </div>
-              <div className="w-px h-8 bg-[rgb(var(--fg)/0.6)]" />
-            </div>
-          </button>
-        </RevealWrapper>
       </div>
     </section>
   );

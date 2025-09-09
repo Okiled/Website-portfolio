@@ -155,21 +155,23 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     if (noiseRef.current) return;
     const d = document.createElement("div");
     d.className = "pointer-events-none fixed inset-0 z-[9998] opacity-10 mix-blend-overlay";
-    const size = 256;
+    const size = 512; // Increased from 256 for HD
     const c = document.createElement("canvas");
     c.width = size; c.height = size;
     const ctx = c.getContext("2d")!;
+    
+    // Enhanced HD noise generation
     const img = ctx.createImageData(size, size);
     for (let i = 0; i < img.data.length; i += 4) {
       const v = (Math.random() * 255) | 0;
       img.data[i] = v; img.data[i + 1] = v; img.data[i + 2] = v;
-      img.data[i + 3] = 10 + ((i / 4) % 7); // subtle dither to kill banding tanpa kotak
+      img.data[i + 3] = 8 + ((i / 4) % 5); // Refined dither pattern
     }
     ctx.putImageData(img, 0, 0);
     d.style.backgroundImage = `url(${c.toDataURL()})`;
-    d.style.backgroundSize = "512px 512px";  // tile besar supaya tidak terlihat grid
+    d.style.backgroundSize = "768px 768px"; // Larger tiles for better quality
     d.style.backgroundRepeat = "repeat";
-    d.style.imageRendering = "auto";
+    d.style.imageRendering = "crisp-edges";
     rootRef.current?.appendChild(d);
     noiseRef.current = d;
   }
@@ -337,21 +339,24 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     if (!svg.querySelector('defs')) svg.appendChild(defs);
 
     defs.innerHTML = `
-      <filter id="akaza-glow" x="-60%" y="-60%" width="220%" height="220%">
-        <feGaussianBlur stdDeviation="2.2" result="c"/>
+      <filter id="akaza-glow" x="-80%" y="-80%" width="260%" height="260%">
+        <feGaussianBlur stdDeviation="3.5" result="coloredBlur"/>
         <feComponentTransfer>
-          <feFuncA type="linear" slope="1.0" intercept="0"/>
+          <feFuncA type="linear" slope="1.2" intercept="0"/>
         </feComponentTransfer>
-        <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+        <feMerge>
+          <feMergeNode in="coloredBlur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
       </filter>
       <linearGradient id="line-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" style="stop-color:var(--stroke-color);stop-opacity:1" />
-        <stop offset="50%" style="stop-color:var(--text-color);stop-opacity:0.92" />
-        <stop offset="100%" style="stop-color:var(--stroke-color);stop-opacity:0.9" />
+        <stop offset="50%" style="stop-color:var(--text-color);stop-opacity:0.95" />
+        <stop offset="100%" style="stop-color:var(--stroke-color);stop-opacity:0.92" />
       </linearGradient>
       <linearGradient id="hex-gradient" x1="0%" y1="0%" x2="100%">
         <stop offset="0%" style="stop-color:var(--stroke-color);stop-opacity:1" />
-        <stop offset="50%" style="stop-color:var(--text-color);stop-opacity:0.95" />
+        <stop offset="50%" style="stop-color:var(--text-color);stop-opacity:0.97" />
         <stop offset="100%" style="stop-color:var(--stroke-color);stop-opacity:1" />
       </linearGradient>
     `;
@@ -414,7 +419,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const compass = compassRef.current!;
     compass.className = [
       "absolute inset-0 pointer-events-none opacity-0 rounded-full z-0",
-      "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,20,147,0.12)_0deg,rgba(255,20,147,0.02)_60deg,rgba(255,20,147,0.12)_120deg,rgba(255,20,147,0.02)_180deg,rgba(255,20,147,0.12)_240deg,rgba(255,20,147,0.02)_300deg,rgba(255,20,147,0.12)_360deg)]",
+      "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,20,147,0.15)_0deg,rgba(255,20,147,0.03)_60deg,rgba(255,20,147,0.15)_120deg,rgba(255,20,147,0.03)_180deg,rgba(255,20,147,0.15)_240deg,rgba(255,20,147,0.03)_300deg,rgba(255,20,147,0.15)_360deg)]",
       "will-change-transform transform-gpu"
     ].join(" ");
     applyCircularMask(compass);
@@ -422,7 +427,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     trackAnim(compass.animate(
       [
         { opacity: 0, transform: "rotate(0deg)" },
-        { opacity: 0.2, transform: "rotate(26deg)" }
+        { opacity: 0.25, transform: "rotate(26deg)" }
       ],
       { duration: nDur(spd(820), 0.1), fill: "forwards", easing: EZ_NATURAL }
     ));
@@ -430,7 +435,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const energyField = energyFieldRef.current!;
     energyField.className = [
       "absolute inset-0 pointer-events-none opacity-0 rounded-full z-0",
-      "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.07)_0%,rgba(255,20,147,0.035)_40%,rgba(255,20,147,0.012)_80%,transparent_100%)]",
+      "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.09)_0%,rgba(255,20,147,0.045)_40%,rgba(255,20,147,0.018)_80%,transparent_100%)]",
       "will-change-transform transform-gpu"
     ].join(" ");
     applyCircularMask(energyField);
@@ -438,14 +443,14 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     trackAnim(energyField.animate(
       [
         { opacity: 0, transform: "rotate(0deg)" },
-        { opacity: 0.14, transform: "rotate(42deg)" }
+        { opacity: 0.18, transform: "rotate(42deg)" }
       ],
       { duration: nDur(spd(900), 0.1), fill: "forwards", easing: EZ_NATURAL }
     ));
 
     await smoothFadeIn(centerDot, 520, T.spreadStartDelay);
     const glowColor = stateRef.current.theme === "pink" ? "var(--glow-pink)" : "var(--glow-blue)";
-    (centerDot as SVGCircleElement).style.filter = `drop-shadow(0 0 8px ${glowColor})`;
+    (centerDot as SVGCircleElement).style.filter = `drop-shadow(0 0 12px ${glowColor})`;
 
     const aura = auraRef.current!;
     aura.className = [
@@ -458,11 +463,11 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     await new Promise(r => { const t = setTimeout(r, nDelay(spd(T.spreadStep), 0.2)); trackTimer(t as unknown as number); });
     const mainLines = els.filter(el => el.getAttribute("data-element") === "main-line");
     await Promise.all(mainLines.map((el, i) => {
-      (el as HTMLElement).style.filter = `drop-shadow(0 0 4px ${glowColor})`;
+      (el as HTMLElement).style.filter = `drop-shadow(0 0 6px ${glowColor})`;
       const a = (el as HTMLElement).animate(
         [
           { opacity: 0, strokeDasharray: "0 1000" },
-          { opacity: 0.3, strokeDasharray: "200 800", offset: 0.3 },
+          { opacity: 0.35, strokeDasharray: "200 800", offset: 0.3 },
           { opacity: 1, strokeDasharray: "1000 0" }
         ],
         { duration: nDur(spd(520), 0.15), delay: nDelay(i * 35, 0.3), easing: EZ_NATURAL, fill: "forwards" }
@@ -489,7 +494,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     await new Promise(r => { const t = setTimeout(r, nDelay(spd(T.spreadStep), 0.2)); trackTimer(t as unknown as number); });
     const branches = els.filter(el => el.getAttribute("data-element") === "branch");
     await Promise.all(branches.map((b, i) => {
-      (b as HTMLElement).style.filter = `drop-shadow(0 0 3px ${glowColor})`;
+      (b as HTMLElement).style.filter = `drop-shadow(0 0 4px ${glowColor})`;
       const a = (b as HTMLElement).animate(
         [
           { opacity: 0, strokeDasharray: "0 100" },
@@ -524,7 +529,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     await new Promise(r => { const t = setTimeout(r, nDelay(spd(T.spreadStep), 0.2)); trackTimer(t as unknown as number); });
     const texts = els.filter(el => el.getAttribute("data-element") === "text");
     await Promise.all(texts.map((d, i) => {
-      (d as HTMLElement).style.filter = `drop-shadow(0 0 4px ${glowColor})`;
+      (d as HTMLElement).style.filter = `drop-shadow(0 0 6px ${glowColor})`;
       (d as HTMLElement).style.textRendering = "geometricPrecision";
       return smoothFadeIn(d, 360, i * nDelay(24, 0.25));
     }));
@@ -546,9 +551,9 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
         const t = window.setTimeout(() => {
           const a = (hex as HTMLElement).animate(
             [
-              { filter: `drop-shadow(0 0 3px ${glowColor})` },
-              { filter: `drop-shadow(0 0 10px ${glowColor})` },
-              { filter: `drop-shadow(0 0 6px ${glowColor})` },
+              { filter: `drop-shadow(0 0 4px ${glowColor})` },
+              { filter: `drop-shadow(0 0 14px ${glowColor})` },
+              { filter: `drop-shadow(0 0 8px ${glowColor})` },
             ],
             { duration: nDur(spd(T.hexPulse), 0.12), easing: EZ_NATURAL, fill: "forwards" }
           );
@@ -561,9 +566,9 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
 
     const a = svg.animate(
       [
-        { filter: `drop-shadow(0 0 8px ${glowColor})` },
-        { filter: `drop-shadow(0 0 16px ${glowColor})` },
-        { filter: `drop-shadow(0 0 10px ${glowColor})` }
+        { filter: `drop-shadow(0 0 10px ${glowColor})` },
+        { filter: `drop-shadow(0 0 20px ${glowColor})` },
+        { filter: `drop-shadow(0 0 12px ${glowColor})` }
       ],
       { duration: nDur(spd(700), 0.1), fill: "forwards", easing: EZ_OUT }
     );
@@ -587,13 +592,13 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     );
     trackAnim(anticip);
 
-    const waveCount = 2;
+    const waveCount = 3; // Increased for HD effect
     for (let wave = 0; wave < waveCount; wave++) {
       const ring = document.createElement('div');
       ring.className = [
         "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
-        "pointer-events-none aspect-square h-[60vmin] rounded-full",
-        "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.15)_0%,rgba(255,20,147,0.06)_70%,transparent_100%)]",
+        "pointer-events-none aspect-square h-[65vmin] rounded-full", // Increased size
+        "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.18)_0%,rgba(255,20,147,0.08)_70%,transparent_100%)]",
         "will-change-transform transform-gpu"
       ].join(" ");
       explosionContainer.appendChild(ring);
@@ -601,24 +606,24 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
       const grow = ring.animate(
         [
           { opacity: 0, transform: "translate(-50%, -50%) scale(0.3)" },
-          { opacity: 0.8, transform: "translate(-50%, -50%) scale(1.2)", offset: 0.4 },
-          { opacity: 0.3, transform: "translate(-50%, -50%) scale(2.2)", offset: 0.8 },
-          { opacity: 0, transform: "translate(-50%, -50%) scale(3)" }
+          { opacity: 0.85, transform: "translate(-50%, -50%) scale(1.2)", offset: 0.4 },
+          { opacity: 0.35, transform: "translate(-50%, -50%) scale(2.4)", offset: 0.8 },
+          { opacity: 0, transform: "translate(-50%, -50%) scale(3.2)" }
         ],
-        { duration: nDur(900 - wave * 100, 0.1), delay: nDelay(80 + wave * 120, 0.1), easing: EZ_NATURAL, fill: "forwards" }
+        { duration: nDur(950 - wave * 120, 0.1), delay: nDelay(80 + wave * 110, 0.1), easing: EZ_NATURAL, fill: "forwards" }
       );
       trackAnim(grow);
     }
 
-    for (let i = 0; i < 6; i++) {
-      const angle = i * 60 + rrange(-8, 8);
+    for (let i = 0; i < 8; i++) { // Increased count
+      const angle = i * 45 + rrange(-8, 8);
       const stream = document.createElement('div');
-      const length = 35 + rrange(-5, 5);
+      const length = 38 + rrange(-6, 6); // Increased length
       stream.className = [
         "absolute left-1/2 top-1/2 -translate-x-1/2 origin-top pointer-events-none",
-        `h-[${length}vh] w-[3px]`,
-        "bg-[linear-gradient(to_bottom,rgba(255,20,147,0.8)_0%,rgba(255,20,147,0.4)_50%,transparent_100%)]",
-        "shadow-[0_0_8px_rgba(255,20,147,0.4)]",
+        `h-[${length}vh] w-[4px]`, // Increased width
+        "bg-[linear-gradient(to_bottom,rgba(255,20,147,0.9)_0%,rgba(255,20,147,0.5)_50%,transparent_100%)]",
+        "shadow-[0_0_12px_rgba(255,20,147,0.5)]", // Enhanced shadow
         `rotate-[${angle}deg]`,
         "rounded-full opacity-0",
         "will-change-transform transform-gpu"
@@ -628,11 +633,11 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
       const streamAnim = stream.animate(
         [
           { opacity: 0, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(0) scaleX(0.5)` },
-          { opacity: 0.9, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(0.8) scaleX(1)`, offset: 0.3 },
-          { opacity: 0.6, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.2) scaleX(0.8)`, offset: 0.7 },
-          { opacity: 0, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.5) scaleX(0.6)` }
+          { opacity: 0.95, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(0.85) scaleX(1)`, offset: 0.3 },
+          { opacity: 0.65, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.25) scaleX(0.8)`, offset: 0.7 },
+          { opacity: 0, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.6) scaleX(0.6)` }
         ],
-        { duration: nDur(750, 0.12), delay: nDelay(i * 45, 0.2), easing: EZ_NATURAL, fill: "forwards" }
+        { duration: nDur(800, 0.12), delay: nDelay(i * 45, 0.2), easing: EZ_NATURAL, fill: "forwards" }
       );
       trackAnim(streamAnim);
     }
@@ -640,30 +645,30 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const particleHolder = document.createElement('div');
     particleHolder.className = "absolute inset-0 pointer-events-none";
     explosionContainer.appendChild(particleHolder);
-    const particles = 16;
+    const particles = 20; // Increased particles
     for (let p = 0; p < particles; p++) {
       const baseAngle = (360 / particles) * p;
       const angle = baseAngle + rrange(-12, 12);
       const particle = document.createElement('div');
-      const size = 0.3 + rrange(-0.1, 0.1);
+      const size = 0.4 + rrange(-0.15, 0.15); // Slightly larger
       particle.className = [
         "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
         `h-[${size}vh] w-[${size}vh] rounded-full`,
-        "bg-[radial-gradient(circle,rgba(255,105,180,0.9)_0%,rgba(255,105,180,0.35)_60%,transparent_100%)]",
+        "bg-[radial-gradient(circle,rgba(255,105,180,0.95)_0%,rgba(255,105,180,0.4)_60%,transparent_100%)]",
         `rotate-[${angle}deg]`,
         "will-change-transform transform-gpu"
       ].join(" ");
       particleHolder.appendChild(particle);
 
-      const dist = 18 + rrange(-4, 4);
+      const dist = 20 + rrange(-5, 5); // Increased distance
       const particleAnim = particle.animate(
         [
           { opacity: 0, transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(0) scale(0.8)` },
-          { opacity: 0.8, transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-${dist * 0.6}vmin) scale(1)`, offset: 0.4 },
-          { opacity: 0.4, transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-${dist}vmin) scale(0.9)`, offset: 0.8 },
+          { opacity: 0.85, transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-${dist * 0.6}vmin) scale(1)`, offset: 0.4 },
+          { opacity: 0.45, transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-${dist}vmin) scale(0.9)`, offset: 0.8 },
           { opacity: 0, transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-${dist * 1.2}vmin) scale(0.7)` }
         ],
-        { duration: nDur(800 + rrange(-100, 100), 0.15), delay: nDelay(60 + (p % 4) * 30, 0.25), easing: EZ_OUT, fill: "forwards" }
+        { duration: nDur(850 + rrange(-120, 120), 0.15), delay: nDelay(60 + (p % 5) * 25, 0.25), easing: EZ_OUT, fill: "forwards" }
       );
       trackAnim(particleAnim);
     }
@@ -672,7 +677,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
       const t = window.setTimeout(() => {
         if (explosionContainer.parentNode) explosionContainer.parentNode.removeChild(explosionContainer);
         resolve(undefined);
-      }, 1200);
+      }, 1300);
       trackTimer(t);
     });
   }
@@ -684,9 +689,9 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
 
     const a1 = svg.animate(
       [
-        { filter: "drop-shadow(0 0 10px var(--glow-pink))" },
-        { filter: "drop-shadow(0 0 22px var(--glow-pink)) drop-shadow(0 0 20px var(--glow-blue))" },
-        { filter: "drop-shadow(0 0 12px var(--glow-blue))" },
+        { filter: "drop-shadow(0 0 12px var(--glow-pink))" },
+        { filter: "drop-shadow(0 0 28px var(--glow-pink)) drop-shadow(0 0 24px var(--glow-blue))" },
+        { filter: "drop-shadow(0 0 15px var(--glow-blue))" },
       ],
       { duration: nDur(T.woosh, 0.1), easing: EZ_NATURAL, fill: "forwards" }
     );
@@ -712,7 +717,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     if (compassRef.current) {
       compassRef.current.className = [
         "absolute inset-0 pointer-events-none opacity-0 rounded-full z-0",
-        "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(0,229,255,0.12)_0deg,rgba(0,229,255,0.02)_60deg,rgba(0,229,255,0.12)_120deg,rgba(0,229,255,0.02)_180deg,rgba(0,229,255,0.12)_240deg,rgba(0,229,255,0.02)_300deg,rgba(0,229,255,0.12)_360deg)]",
+        "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(0,229,255,0.15)_0deg,rgba(0,229,255,0.03)_60deg,rgba(0,229,255,0.15)_120deg,rgba(0,229,255,0.03)_180deg,rgba(0,229,255,0.15)_240deg,rgba(0,229,255,0.03)_300deg,rgba(0,229,255,0.15)_360deg)]",
         "will-change-transform transform-gpu"
       ].join(" ");
       applyCircularMask(compassRef.current);
@@ -720,7 +725,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     if (energyFieldRef.current) {
       energyFieldRef.current.className = [
         "absolute inset-0 pointer-events-none opacity-0 rounded-full z-0",
-        "bg-[radial-gradient(circle_at_50%_50%,rgba(0,229,255,0.07)_0%,rgba(0,229,255,0.035)_40%,rgba(0,229,255,0.012)_80%,transparent_100%)]",
+        "bg-[radial-gradient(circle_at_50%_50%,rgba(0,229,255,0.09)_0%,rgba(0,229,255,0.045)_40%,rgba(0,229,255,0.018)_80%,transparent_100%)]",
         "will-change-transform transform-gpu"
       ].join(" ");
       applyCircularMask(energyFieldRef.current);
@@ -739,12 +744,12 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const els = stateRef.current.animationElements;
     els.forEach((el) => {
       const role = el.getAttribute("data-element");
-      const baseGlow = role === "branch" ? 3 : role === "main-line" ? 4 : role === "text" ? 4 : 6;
+      const baseGlow = role === "branch" ? 4 : role === "main-line" ? 6 : role === "text" ? 6 : 8;
       (el as HTMLElement).style.filter = `drop-shadow(0 0 ${baseGlow}px var(--glow-blue))`;
     });
 
     const aura = auraRef.current!;
-    const a3 = aura.animate([{ opacity: 0.2 }, { opacity: 0.25 }],
+    const a3 = aura.animate([{ opacity: 0.2 }, { opacity: 0.28 }],
       { duration: nDur(380, 0.1), fill: "forwards", easing: EZ_NATURAL });
     trackAnim(a3);
 
@@ -763,14 +768,14 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const energyField = energyFieldRef.current!;
 
     const auraDown = aura.animate(
-      [{ opacity: 0.25 }, { opacity: 0.12 }],
+      [{ opacity: 0.28 }, { opacity: 0.15 }],
       { duration: nDur(150, 0.05), fill: "forwards", easing: EZ_NATURAL }
     );
     trackAnim(auraDown);
 
     ring.className = [
       "absolute inset-0 pointer-events-none opacity-0 rounded-full z-20 mix-blend-screen",
-      "bg-[radial-gradient(circle_at_50%_50%,var(--glow-blue)_0%,rgba(0,229,255,0.5)_20%,rgba(0,229,255,0.2)_50%,transparent_80%)]",
+      "bg-[radial-gradient(circle_at_50%_50%,var(--glow-blue)_0%,rgba(0,229,255,0.6)_20%,rgba(0,229,255,0.25)_50%,transparent_80%)]",
       "will-change-transform transform-gpu"
     ].join(" ");
     applyCircularMask(ring, 0.5, 0.85);
@@ -778,9 +783,9 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const a1 = ring.animate(
       [
         { opacity: 0, transform: "scale(0.2)" },
-        { opacity: 0.6, transform: "scale(1.45)", offset: 0.45 },
-        { opacity: 0.35, transform: "scale(2.45)", offset: 0.82 },
-        { opacity: 0, transform: "scale(3.45)" },
+        { opacity: 0.7, transform: "scale(1.5)", offset: 0.45 },
+        { opacity: 0.4, transform: "scale(2.6)", offset: 0.82 },
+        { opacity: 0, transform: "scale(3.6)" },
       ],
       { duration: nDur(T.boom, 0.1), easing: EZ_NATURAL, fill: "forwards" }
     );
@@ -788,8 +793,8 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
 
     const a2 = compass.animate(
       [
-        { opacity: 0.2, transform: "rotate(540deg) scale(1)" },
-        { opacity: 0.4, transform: "rotate(720deg) scale(1.015)" },
+        { opacity: 0.25, transform: "rotate(540deg) scale(1)" },
+        { opacity: 0.45, transform: "rotate(720deg) scale(1.02)" },
         { opacity: 0, transform: "rotate(900deg) scale(1)" },
       ],
       { duration: nDur(T.boom, 0.1), easing: EZ_NATURAL, fill: "forwards" }
@@ -798,8 +803,8 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
 
     const a3 = energyField.animate(
       [
-        { opacity: 0.15, transform: "rotate(45deg)" },
-        { opacity: 0.3, transform: "rotate(-90deg)" },
+        { opacity: 0.18, transform: "rotate(45deg)" },
+        { opacity: 0.35, transform: "rotate(-90deg)" },
         { opacity: 0, transform: "rotate(-270deg)" },
       ],
       { duration: nDur(Math.round(T.boom * 1.08), 0.1), easing: EZ_NATURAL, fill: "forwards" }
@@ -808,9 +813,9 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
 
     const a4 = svg.animate(
       [
-        { filter: "drop-shadow(0 0 12px var(--glow-blue))" },
-        { filter: "drop-shadow(0 0 24px var(--glow-blue))" },
-        { filter: "drop-shadow(0 0 14px var(--glow-blue))" },
+        { filter: "drop-shadow(0 0 15px var(--glow-blue))" },
+        { filter: "drop-shadow(0 0 30px var(--glow-blue))" },
+        { filter: "drop-shadow(0 0 18px var(--glow-blue))" },
       ],
       { duration: nDur(T.boom, 0.1), easing: EZ_INOUT, fill: "forwards" }
     );
@@ -836,8 +841,8 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const energyWave = document.createElement('div');
     energyWave.className = [
       "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
-      "pointer-events-none aspect-square h-[55vmin]",
-      "bg-[radial-gradient(circle_at_50%_50%,rgba(0,234,255,0.25)_0%,rgba(0,234,255,0.12)_40%,rgba(0,234,255,0.05)_70%,transparent_100%)]",
+      "pointer-events-none aspect-square h-[60vmin]", // Increased size
+      "bg-[radial-gradient(circle_at_50%_50%,rgba(0,234,255,0.3)_0%,rgba(0,234,255,0.15)_40%,rgba(0,234,255,0.06)_70%,transparent_100%)]",
       "rounded-full will-change-transform transform-gpu"
     ].join(" ");
     burstContainer.appendChild(energyWave);
@@ -845,25 +850,25 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const waveAnimation = energyWave.animate(
       [
         { opacity: 0, transform: 'translate(-50%, -50%) scale(0.4) rotate(0deg)' },
-        { opacity: 0.8, transform: 'translate(-50%, -50%) scale(1.1) rotate(30deg)', offset: 0.35 },
-        { opacity: 0.4, transform: 'translate(-50%, -50%) scale(2.2) rotate(90deg)', offset: 0.75 },
-        { opacity: 0, transform: 'translate(-50%, -50%) scale(3.5) rotate(150deg)' }
+        { opacity: 0.9, transform: 'translate(-50%, -50%) scale(1.15) rotate(30deg)', offset: 0.35 },
+        { opacity: 0.45, transform: 'translate(-50%, -50%) scale(2.4) rotate(90deg)', offset: 0.75 },
+        { opacity: 0, transform: 'translate(-50%, -50%) scale(3.8) rotate(150deg)' }
       ],
-      { duration: nDur(950, 0.1), easing: EZ_NATURAL, fill: 'forwards' }
+      { duration: nDur(1000, 0.1), easing: EZ_NATURAL, fill: 'forwards' }
     );
     trackAnim(waveAnimation);
 
-    for (let i = 0; i < 8; i++) {
-      const base = i * 45;
+    for (let i = 0; i < 10; i++) { // Increased count
+      const base = i * 36;
       const angle = base + rrange(-10, 10);
       const flow = document.createElement('div');
-      const length = 32 + rrange(-6, 6);
-      const width = 1.5 + rrange(-0.3, 0.3);
+      const length = 35 + rrange(-7, 7); // Increased variation
+      const width = 2 + rrange(-0.4, 0.4); // Increased width
       flow.className = [
         "absolute left-1/2 top-1/2 -translate-x-1/2 origin-top pointer-events-none",
         `h-[${length}vh] w-[${width}px]`,
-        "bg-[linear-gradient(to_bottom,rgba(0,234,255,0.9)_0%,rgba(0,234,255,0.4)_60%,transparent_100%)]",
-        "shadow-[0_0_6px_rgba(0,234,255,0.5)]",
+        "bg-[linear-gradient(to_bottom,rgba(0,234,255,0.95)_0%,rgba(0,234,255,0.5)_60%,transparent_100%)]",
+        "shadow-[0_0_8px_rgba(0,234,255,0.6)]", // Enhanced shadow
         `rotate-[${angle}deg]`,
         "rounded-full will-change-transform transform-gpu"
       ].join(" ");
@@ -872,18 +877,18 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
       const flowAnimation = flow.animate(
         [
           { opacity: 0, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(0) scaleX(0.6)` },
-          { opacity: 0.9, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(0.7) scaleX(1)`, offset: 0.4 },
-          { opacity: 0.5, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.1) scaleX(0.8)`, offset: 0.75 },
-          { opacity: 0, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.4) scaleX(0.6)` }
+          { opacity: 0.95, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(0.75) scaleX(1)`, offset: 0.4 },
+          { opacity: 0.55, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.15) scaleX(0.8)`, offset: 0.75 },
+          { opacity: 0, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.5) scaleX(0.6)` }
         ],
-        { duration: nDur(750 + rrange(-50, 50), 0.12), delay: nDelay((i % 4) * 35, 0.2), easing: EZ_NATURAL, fill: 'forwards' }
+        { duration: nDur(800 + rrange(-60, 60), 0.12), delay: nDelay((i % 5) * 30, 0.2), easing: EZ_NATURAL, fill: 'forwards' }
       );
       trackAnim(flowAnimation);
     }
 
     const t = window.setTimeout(() => {
       if (burstContainer.parentNode) burstContainer.parentNode.removeChild(burstContainer);
-    }, 1400);
+    }, 1500);
     trackTimer(t);
   }
 
@@ -899,7 +904,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     if (compassRef.current) {
       compassRef.current.className = [
         "absolute inset-0 pointer-events-none opacity-0 z-0",
-        "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,20,147,0.12)_0deg,rgba(255,20,147,0.02)_60deg,rgba(255,20,147,0.12)_120deg,rgba(255,20,147,0.02)_180deg,rgba(255,20,147,0.12)_240deg,rgba(255,20,147,0.02)_300deg,rgba(255,20,147,0.12)_360deg)]",
+        "bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,20,147,0.15)_0deg,rgba(255,20,147,0.03)_60deg,rgba(255,20,147,0.15)_120deg,rgba(255,20,147,0.03)_180deg,rgba(255,20,147,0.15)_240deg,rgba(255,20,147,0.03)_300deg,rgba(255,20,147,0.15)_360deg)]",
         "will-change-transform transform-gpu"
       ].join(" ");
       applyCircularMask(compassRef.current);
@@ -907,7 +912,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     if (energyFieldRef.current) {
       energyFieldRef.current.className = [
         "absolute inset-0 pointer-events-none opacity-0 z-0 rounded-full",
-        "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.07)_0%,rgba(255,20,147,0.035)_40%,rgba(255,20,147,0.012)_80%,transparent_100%)]",
+        "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.09)_0%,rgba(255,20,147,0.045)_40%,rgba(255,20,147,0.018)_80%,transparent_100%)]",
         "will-change-transform transform-gpu"
       ].join(" ");
       applyCircularMask(energyFieldRef.current);
@@ -938,10 +943,10 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const fadeOut = c.animate(
       [
         { opacity: 1, transform: "scale(1)" },
-        { opacity: 0.72, transform: "scale(0.985)" },
+        { opacity: 0.75, transform: "scale(0.985)" },
         { opacity: 0, transform: "scale(0.96)" }
       ],
-      { duration: nDur(1000, 0.06), easing: EZ_OUT, fill: "forwards" }
+      { duration: nDur(1100, 0.06), easing: EZ_OUT, fill: "forwards" }
     );
     trackAnim(fadeOut);
     await new Promise(res => fadeOut.addEventListener("finish", () => res(undefined)));
@@ -972,7 +977,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
   return (
     <div
       ref={rootRef}
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-visible bg-blue ${exiting ? "pointer-events-none" : ""}`}
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-visible bg--blue ${exiting ? "pointer-events-none" : ""}`}
       style={rootVars}
       aria-hidden={exiting}
       aria-label="Loading"
@@ -990,10 +995,28 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
           ref={svgRef}
           viewBox="-300 -300 600 600"
           aria-label="Loading Animation"
-          className="w-[min(70vw,70vh)] h-[min(70vw,70vh)] z-10"
+          className="w-[min(80vw,80vh)] h-[min(80vw,80vh)] max-w-[600px] max-h-[600px] min-w-[320px] min-h-[320px] z-10"
           shapeRendering="geometricPrecision"
-          style={{ textRendering: "geometricPrecision" }}
+          style={{ 
+            textRendering: "geometricPrecision",
+            imageRendering: "crisp-edges"
+          }}
         >
+          <defs>
+            <style>
+              {`
+                @media (max-width: 640px) {
+                  text { font-size: 20px; }
+                }
+                @media (max-width: 480px) {
+                  text { font-size: 18px; }
+                }
+                @media (min-width: 1200px) {
+                  text { font-size: 28px; }
+                }
+              `}
+            </style>
+          </defs>
           <circle ref={centerDotRef} cx="0" cy="0" r="12" data-role="center" />
           <g ref={layer1Ref}></g>
           <g ref={layer2Ref}></g>
@@ -1001,11 +1024,11 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
 
         <div
           ref={ringRef}
-          className="absolute inset-0 pointer-events-none opacity-0 z-20 mix-blend-screen
-                    bg-[radial-gradient(circle_at_50%_50%,var(--glow-blue)_0%,rgba(0,229,255,0.5)_20%,rgba(0,229,255,0.2)_50%,transparent_80%)]" />
+          className="absolute inset-0 pointer-events-none opacity-0 z-20 mix-blend-screen rounded-full
+                    bg-[radial-gradient(circle_at_50%_50%,var(--glow-blue)_0%,rgba(0,229,255,0.6)_20%,rgba(0,229,255,0.25)_50%,transparent_80%)]" />
       </div>
     </div>
   );
 };
 
-export default LoadingScreen;
+export default LoadingScreen

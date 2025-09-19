@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState, Suspense } from "react";
-import { Github, Linkedin, Mail, ChevronDown, MapPin, Download, Sparkles, Code, Brain, TrendingUp } from "lucide-react";
+import { MapPin, Download, Sparkles, Code, Brain, TrendingUp } from "lucide-react";
 import TextScramble from "../animations/TextScramble";
 import { RevealWrapper, StaggeredReveal } from "../animations/RevealAnimations";
+import { socialLinks } from "../utils/data";
 
 const ChromeGridLazy = React.lazy(() => import("../animations/BackgroundPaths"));
 
@@ -10,21 +11,12 @@ interface HeroSectionProps {
   scrollToSection: (sectionId: string) => void;
 }
 
-const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) => {
-  const socialLinks = useMemo(
-    () => [
-      { icon: Github, href: "https://github.com/Okiled", label: "GitHub" },
-      { icon: Linkedin, href: "https://linkedin.com/in/deliko-hartono", label: "LinkedIn" },
-      { icon: Mail, href: "mailto:hartonodeliko@gmail.com", label: "Email" },
-    ],
-    []
-  );
-
+const HeroSection: React.FC<HeroSectionProps> = ({ scrollY }) => {
   const specialties = useMemo(
     () => [
       { text: "Artificial Intelligence", icon: Brain },
       { text: "Quantitative Finance", icon: TrendingUp },
-      { text: "Full-Stack Development", icon: Code }
+      { text: "Full-Stack Development", icon: Code },
     ],
     []
   );
@@ -37,10 +29,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
   useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
-    const io = new IntersectionObserver(
-      ([e]) => setVisible(e.isIntersecting),
-      { threshold: 0.1, rootMargin: "0px 0px -15% 0px" }
-    );
+    const io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), {
+      threshold: 0.1,
+      rootMargin: "0px 0px -15% 0px",
+    });
     io.observe(el);
     return () => io.disconnect();
   }, []);
@@ -65,6 +57,8 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
+
+  const cvLink = socialLinks.find((l) => l.label === "Download CV")?.href || "#";
 
   return (
     <section
@@ -96,7 +90,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
           style={{
             top: "15%",
             left: "10%",
-            transform: `translate(${mousePosition.x * 20}px, ${mousePosition.y * 20}px)`
+            transform: `translate(${mousePosition.x * 20}px, ${mousePosition.y * 20}px)`,
           }}
         >
           <div className="w-full h-full rounded-full bg-[rgb(var(--fg)/0.2)] blur-xl" />
@@ -106,7 +100,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
           style={{
             top: "70%",
             right: "15%",
-            transform: `translate(${mousePosition.x * -15}px, ${mousePosition.y * -15}px)`
+            transform: `translate(${mousePosition.x * -15}px, ${mousePosition.y * -15}px)`,
           }}
         >
           <div className="w-full h-full rounded-full bg-[rgb(var(--fg)/0.3)] blur-2xl" />
@@ -116,7 +110,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
           style={{
             top: "40%",
             right: "20%",
-            transform: `translate(${mousePosition.x * 10}px, ${mousePosition.y * 10}px)`
+            transform: `translate(${mousePosition.x * 10}px, ${mousePosition.y * 10}px)`,
           }}
         >
           <Sparkles className="w-full h-full text-fg" />
@@ -135,12 +129,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
         className="absolute inset-0 z-20 pointer-events-none will-change-transform parallax-layer"
         style={{
           transform: `translate3d(0, ${visible ? scrollY * 0.1 : 0}px, 0)`,
-          background: `radial-gradient(ellipse at ${mousePosition.x * 100}% ${mousePosition.y * 100}%, rgb(var(--fg)/0.05) 0%, transparent 50%)`
+          background: `radial-gradient(ellipse at ${mousePosition.x * 100}% ${mousePosition.y * 100}%, rgb(var(--fg)/0.05) 0%, transparent 50%)`,
         }}
       />
 
       <div className="container mx-auto px-6 relative z-40 max-w-6xl pointer-events-auto mt-20">
-
         <div className="text-center mb-20">
           <RevealWrapper animation="fadeIn" delay={200} className="mb-8">
             <div className="text-md uppercase tracking-widest text-fg/70 font-bold mb-6 relative">
@@ -184,7 +177,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
           </RevealWrapper>
         </div>
 
-        <RevealWrapper animation="slideUp" delay={800} className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-20">
+        <RevealWrapper
+          animation="slideUp"
+          delay={800}
+          className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-20"
+        >
           <div className="mt-4">
             <StaggeredReveal
               staggerDelay={100}
@@ -192,33 +189,44 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
               baseDelay={900}
               className="grid grid-flow-col auto-cols-max gap-4 sm:gap-6"
             >
-              {socialLinks.map(({ icon: Icon, href, label }) => (
-                <a
-                  key={href}
-                  href={href}
-                  aria-label={label}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative inline-flex size-14 sm:size-16 items-center justify-center rounded-2xl border border-[rgb(var(--fg)/0.2)] bg-[rgb(var(--bg)/0.6)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-                >
-                  <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-fg group-hover:scale-110 transition-all duration-300" />
-                  <span className="sr-only">{label}</span>
-                </a>
-              ))}
+              {socialLinks.map(({ icon: Icon, href, label }) => {
+                const isCV = label === "Download CV";
+                return (
+                  <a
+                    key={href}
+                    href={href}
+                    {...(isCV ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                    aria-label={label}
+                    className="group relative inline-flex size-14 sm:size-16 items-center justify-center rounded-2xl border border-[rgb(var(--fg)/0.2)] bg-[rgb(var(--bg)/0.6)] backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                  >
+                    <Icon className="w-6 h-6 sm:w-7 sm:h-7 text-fg group-hover:scale-110 transition-all duration-300" />
+                    <span className="sr-only">{label}</span>
+                  </a>
+                );
+              })}
             </StaggeredReveal>
           </div>
 
           <div className="h-px w-16 sm:h-12 sm:w-px bg-[rgb(var(--fg)/0.4)]" />
 
           <RevealWrapper animation="slideLeft" delay={1200}>
-            <button className="group relative flex items-center gap-3 px-8 py-4 bg-fg border border-[rgb(var(--fg)/0.5)] rounded-xl shadow-lg">
+            <a
+              href={cvLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative flex items-center gap-3 px-8 py-4 bg-fg border border-[rgb(var(--fg)/0.5)] rounded-xl shadow-lg"
+            >
               <Download className="w-5 h-5 text-bg" />
-              <span className="text-sm font-medium text-bg">Download Resume</span>
-            </button>
+              <span className="text-sm font-medium text-bg">Download CV</span>
+            </a>
           </RevealWrapper>
         </RevealWrapper>
 
-        <RevealWrapper animation="fadeIn" delay={1800} className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-24">
+        <RevealWrapper
+          animation="fadeIn"
+          delay={1800}
+          className="flex flex-col sm:flex-row items-center justify-center gap-8 mb-24"
+        >
           <div className="flex items-center gap-3 px-6 py-3 bg-[rgb(var(--bg)/0.6)] backdrop-blur-sm border border-[rgb(var(--fg)/0.2)] rounded-full">
             <MapPin className="w-5 h-5 animate-pulse text-fg" />
             <span className="text-sm text-fg">Jakarta, Indonesia</span>
@@ -227,17 +235,17 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, scrollToSection }) =
           <div className="h-px w-12 bg-[rgb(var(--fg)/0.4)] hidden sm:block" />
 
           <div className="grid grid-cols-2 gap-8">
-            {[{ label: "Years Experience", value: "2+" }, { label: "Projects Completed", value: "2+" }].map(
-              ({ label, value }) => (
-                <div key={label} className="text-center group">
-                  <div className="text-3xl font-bold text-fg mb-2">{value}</div>
-                  <div className="text-xs text-fg uppercase tracking-wider">{label}</div>
-                </div>
-              )
-            )}
+            {[
+              { label: "Years Experience", value: "2+" },
+              { label: "Projects Completed", value: "2+" },
+            ].map(({ label, value }) => (
+              <div key={label} className="text-center group">
+                <div className="text-3xl font-bold text-fg mb-2">{value}</div>
+                <div className="text-xs text-fg uppercase tracking-wider">{label}</div>
+              </div>
+            ))}
           </div>
         </RevealWrapper>
-
       </div>
     </section>
   );

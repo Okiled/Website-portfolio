@@ -1,16 +1,6 @@
-import { 
-  Github, 
-  Linkedin, 
-  Mail, 
-  TrendingUp, 
-  Award, 
-  Code, 
-  Globe, 
-  Smartphone, 
-  Brain, 
-  Database, 
-  BarChart3 
-} from 'lucide-react';
+import { Download, Github, Linkedin, Mail, TrendingUp, Award, Code, Globe, Smartphone, Brain, Database, BarChart3 } from 'lucide-react';
+import cvPdf from '../asset/DelikoHartono.pdf';
+
 
 import type { Experience, Project, Skill, SocialLink, ProjectDetails } from '../types';
 
@@ -64,9 +54,10 @@ const techIconMapping: Record<string, string> = {
 };
 
 export const socialLinks: SocialLink[] = [
-  { icon: Github, href: "https://github.com/Okiled", label: "GitHub" },
-  { icon: Linkedin, href: "https://www.linkedin.com/in/deliko-hartono-9b06b827a/", label: "LinkedIn" },
-  { icon: Mail, href: "mailto:hartonodeliko@gmail.com", label: "Email" }
+  { icon: Download, href: cvPdf, label: 'Download CV'},
+  { icon: Github, href: 'https://github.com/Okiled', label: 'GitHub' },
+  { icon: Linkedin, href: 'https://www.linkedin.com/in/deliko-hartono-9b06b827a/', label: 'LinkedIn' },
+  { icon: Mail, href: 'mailto:hartonodeliko@gmail.com', label: 'Email' },
 ];
 
 export const experiences: Experience[] = [

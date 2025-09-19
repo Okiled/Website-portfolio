@@ -6,6 +6,7 @@ export interface SocialLink {
   icon: LucideIcon;
   href: string;
   label: string;
+  downloadFilename?: string;
 }
 
 export interface Experience {

@@ -1,20 +1,20 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const LOOP = false;
-const TOTAL_LOADING_TIME = 5500;
+const TOTAL_LOADING_TIME = 3500; // Reduced from 5500
 
 const T = {
-  spreadStep: 60,
-  spreadStartDelay: 80,
-  hexPulse: 500,
-  hexStagger: 30,
-  woosh: 600,
-  wooshBetween: 120,
-  afterAllGlow: 100,
-  beforeWooshBlue: 150,
-  boom: 800,
+  spreadStep: 40, // Reduced from 60
+  spreadStartDelay: 50, // Reduced from 80
+  hexPulse: 350, // Reduced from 500
+  hexStagger: 20, // Reduced from 30
+  woosh: 400, // Reduced from 600
+  wooshBetween: 80, // Reduced from 120
+  afterAllGlow: 60, // Reduced from 100
+  beforeWooshBlue: 100, // Reduced from 150
+  boom: 550, // Reduced from 800
   progressTick: 16,
-  startDelay: 50,
+  startDelay: 30, // Reduced from 50
 } as const;
 
 type Params = {
@@ -90,7 +90,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     theme: "pink" as "pink" | "blue",
   });
 
-  const speedFactorPink = 0.6;
+  const speedFactorPink = 0.7; // Increased from 0.6 for faster pink animations
   const spd = (d: number) =>
     stateRef.current.theme === "pink" ? Math.max(30, Math.round(d * speedFactorPink)) : d;
 
@@ -212,7 +212,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
 
       ["left", "right"].forEach((side) => {
         const sign = side === "left" ? -1 : 1;
-        const branch = document.createElementNS(svgns, "line");
+        const branch = document.createElementNS(svgns, "branch");
         branch.setAttribute("x1", "0"); branch.setAttribute("y1", String(baseY));
         branch.setAttribute("x2", String(sign * dx)); branch.setAttribute("y2", String(baseY + dy));
         branch.setAttribute("stroke", "var(--stroke-color)");
@@ -349,6 +349,16 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
           <feMergeNode in="SourceGraphic"/>
         </feMerge>
       </filter>
+      <filter id="center-glow" x="-200%" y="-200%" width="400%" height="400%">
+        <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+        <feComponentTransfer>
+          <feFuncA type="linear" slope="1.5" intercept="0"/>
+        </feComponentTransfer>
+        <feMerge>
+          <feMergeNode in="coloredBlur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
       <linearGradient id="line-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" style="stop-color:var(--stroke-color);stop-opacity:1" />
         <stop offset="50%" style="stop-color:var(--text-color);stop-opacity:0.95" />
@@ -384,6 +394,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     centerDot.setAttribute("stroke-width", String(P.strokeWidth));
     centerDot.setAttribute("vector-effect", "non-scaling-stroke");
     centerDot.setAttribute("data-role", "center");
+    centerDot.setAttribute("filter", "url(#center-glow)");
     (centerDot.style as any).shapeRendering = "geometricPrecision";
     stateRef.current.animationElements.push(centerDot);
 
@@ -429,7 +440,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
         { opacity: 0, transform: "rotate(0deg)" },
         { opacity: 0.25, transform: "rotate(26deg)" }
       ],
-      { duration: nDur(spd(820), 0.1), fill: "forwards", easing: EZ_NATURAL }
+      { duration: nDur(spd(600), 0.1), fill: "forwards", easing: EZ_NATURAL } // Reduced from 820
     ));
 
     const energyField = energyFieldRef.current!;
@@ -445,10 +456,10 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
         { opacity: 0, transform: "rotate(0deg)" },
         { opacity: 0.18, transform: "rotate(42deg)" }
       ],
-      { duration: nDur(spd(900), 0.1), fill: "forwards", easing: EZ_NATURAL }
+      { duration: nDur(spd(650), 0.1), fill: "forwards", easing: EZ_NATURAL } // Reduced from 900
     ));
 
-    await smoothFadeIn(centerDot, 520, T.spreadStartDelay);
+    await smoothFadeIn(centerDot, 360, T.spreadStartDelay); // Reduced from 520
     const glowColor = stateRef.current.theme === "pink" ? "var(--glow-pink)" : "var(--glow-blue)";
     (centerDot as SVGCircleElement).style.filter = `drop-shadow(0 0 12px ${glowColor})`;
 
@@ -470,7 +481,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
           { opacity: 0.35, strokeDasharray: "200 800", offset: 0.3 },
           { opacity: 1, strokeDasharray: "1000 0" }
         ],
-        { duration: nDur(spd(520), 0.15), delay: nDelay(i * 35, 0.3), easing: EZ_NATURAL, fill: "forwards" }
+        { duration: nDur(spd(380), 0.15), delay: nDelay(i * 25, 0.3), easing: EZ_NATURAL, fill: "forwards" } // Reduced durations and delays
       );
       trackAnim(a);
       return new Promise(res => a.addEventListener("finish", () => res(undefined)));
@@ -485,7 +496,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
           { opacity: 1, transform: "scale(1.05)", offset: 0.6 },
           { opacity: 1, transform: "scale(1)" }
         ],
-        { duration: nDur(spd(450), 0.18), delay: nDelay(i * T.hexStagger, 0.25), easing: EZ_NATURAL, fill: "forwards" }
+        { duration: nDur(spd(320), 0.18), delay: nDelay(i * 15, 0.25), easing: EZ_NATURAL, fill: "forwards" } // Reduced from 450 and stagger from 30 to 15
       );
       trackAnim(a);
       return new Promise(res => a.addEventListener("finish", () => res(undefined)));
@@ -500,7 +511,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
           { opacity: 0, strokeDasharray: "0 100" },
           { opacity: 1, strokeDasharray: "100 0" }
         ],
-        { duration: nDur(spd(380), 0.2), delay: nDelay(i * 28, 0.25), easing: EZ_NATURAL, fill: "forwards" }
+        { duration: nDur(spd(280), 0.2), delay: nDelay(i * 20, 0.25), easing: EZ_NATURAL, fill: "forwards" } // Reduced from 380 and 28
       );
       trackAnim(a);
       return new Promise(res => a.addEventListener("finish", () => res(undefined)));
@@ -517,21 +528,21 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
           { opacity: 0, transform: "scale(0.8)" },
           { opacity: 1, transform: "scale(1)" }
         ],
-        { duration: nDur(spd(320), 0.15), delay: nDelay(i * 20, 0.25), easing: EZ_NATURAL, fill: "forwards" }
+        { duration: nDur(spd(240), 0.15), delay: nDelay(i * 15, 0.25), easing: EZ_NATURAL, fill: "forwards" } // Reduced from 320 and 20
       );
       trackAnim(a);
       return new Promise(res => a.addEventListener("finish", () => res(undefined)));
     }));
 
     const capDots = els.filter(el => el.getAttribute("data-element") === "cap-nucleus");
-    await Promise.all(capDots.map((e, i) => smoothFadeIn(e, 220, i * 14)));
+    await Promise.all(capDots.map((e, i) => smoothFadeIn(e, 160, i * 10))); // Reduced from 220 and 14
 
     await new Promise(r => { const t = setTimeout(r, nDelay(spd(T.spreadStep), 0.2)); trackTimer(t as unknown as number); });
     const texts = els.filter(el => el.getAttribute("data-element") === "text");
     await Promise.all(texts.map((d, i) => {
       (d as HTMLElement).style.filter = `drop-shadow(0 0 6px ${glowColor})`;
       (d as HTMLElement).style.textRendering = "geometricPrecision";
-      return smoothFadeIn(d, 360, i * nDelay(24, 0.25));
+      return smoothFadeIn(d, 260, i * nDelay(18, 0.25)); // Reduced from 360 and 24
     }));
   }
 
@@ -543,7 +554,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const compass = compassRef.current!;
     trackAnim(compass.animate(
       [{ transform: "rotate(26deg)" }, { transform: "rotate(388deg)" }],
-      { duration: nDur(spd(T.hexPulse * hexes.length * 0.8), 0.1), easing: "linear", fill: "forwards" }
+      { duration: nDur(spd(T.hexPulse * hexes.length * 0.6), 0.1), easing: "linear", fill: "forwards" } // Reduced multiplier from 0.8 to 0.6
     ));
 
     await Promise.all(hexes.map((hex, i) =>
@@ -570,7 +581,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
         { filter: `drop-shadow(0 0 20px ${glowColor})` },
         { filter: `drop-shadow(0 0 12px ${glowColor})` }
       ],
-      { duration: nDur(spd(700), 0.1), fill: "forwards", easing: EZ_OUT }
+      { duration: nDur(spd(500), 0.1), fill: "forwards", easing: EZ_OUT } // Reduced from 700
     );
     trackAnim(a);
     await new Promise(res => a.addEventListener("finish", () => res(undefined)));
@@ -588,16 +599,16 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
         { transform: "scale(0.98)", offset: 0.3 },
         { transform: "scale(1)" }
       ],
-      { duration: nDur(160, 0.05), easing: EZ_NATURAL, fill: "none" }
+      { duration: nDur(120, 0.05), easing: EZ_NATURAL, fill: "none" } // Reduced from 160
     );
     trackAnim(anticip);
 
-    const waveCount = 3; // Increased for HD effect
+    const waveCount = 3;
     for (let wave = 0; wave < waveCount; wave++) {
       const ring = document.createElement('div');
       ring.className = [
         "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
-        "pointer-events-none aspect-square h-[65vmin] rounded-full", // Increased size
+        "pointer-events-none aspect-square h-[65vmin] rounded-full",
         "bg-[radial-gradient(circle_at_50%_50%,rgba(255,20,147,0.18)_0%,rgba(255,20,147,0.08)_70%,transparent_100%)]",
         "will-change-transform transform-gpu"
       ].join(" ");
@@ -610,20 +621,20 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
           { opacity: 0.35, transform: "translate(-50%, -50%) scale(2.4)", offset: 0.8 },
           { opacity: 0, transform: "translate(-50%, -50%) scale(3.2)" }
         ],
-        { duration: nDur(950 - wave * 120, 0.1), delay: nDelay(80 + wave * 110, 0.1), easing: EZ_NATURAL, fill: "forwards" }
+        { duration: nDur(700 - wave * 90, 0.1), delay: nDelay(60 + wave * 80, 0.1), easing: EZ_NATURAL, fill: "forwards" } // Reduced durations and delays
       );
       trackAnim(grow);
     }
 
-    for (let i = 0; i < 8; i++) { // Increased count
+    for (let i = 0; i < 8; i++) {
       const angle = i * 45 + rrange(-8, 8);
       const stream = document.createElement('div');
-      const length = 38 + rrange(-6, 6); // Increased length
+      const length = 38 + rrange(-6, 6);
       stream.className = [
         "absolute left-1/2 top-1/2 -translate-x-1/2 origin-top pointer-events-none",
-        `h-[${length}vh] w-[4px]`, // Increased width
+        `h-[${length}vh] w-[4px]`,
         "bg-[linear-gradient(to_bottom,rgba(255,20,147,0.9)_0%,rgba(255,20,147,0.5)_50%,transparent_100%)]",
-        "shadow-[0_0_12px_rgba(255,20,147,0.5)]", // Enhanced shadow
+        "shadow-[0_0_12px_rgba(255,20,147,0.5)]",
         `rotate-[${angle}deg]`,
         "rounded-full opacity-0",
         "will-change-transform transform-gpu"
@@ -637,7 +648,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
           { opacity: 0.65, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.25) scaleX(0.8)`, offset: 0.7 },
           { opacity: 0, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.6) scaleX(0.6)` }
         ],
-        { duration: nDur(800, 0.12), delay: nDelay(i * 45, 0.2), easing: EZ_NATURAL, fill: "forwards" }
+        { duration: nDur(580, 0.12), delay: nDelay(i * 30, 0.2), easing: EZ_NATURAL, fill: "forwards" } // Reduced from 800 and 45
       );
       trackAnim(streamAnim);
     }
@@ -645,12 +656,12 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const particleHolder = document.createElement('div');
     particleHolder.className = "absolute inset-0 pointer-events-none";
     explosionContainer.appendChild(particleHolder);
-    const particles = 20; // Increased particles
+    const particles = 20;
     for (let p = 0; p < particles; p++) {
       const baseAngle = (360 / particles) * p;
       const angle = baseAngle + rrange(-12, 12);
       const particle = document.createElement('div');
-      const size = 0.4 + rrange(-0.15, 0.15); // Slightly larger
+      const size = 0.4 + rrange(-0.15, 0.15);
       particle.className = [
         "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
         `h-[${size}vh] w-[${size}vh] rounded-full`,
@@ -660,7 +671,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
       ].join(" ");
       particleHolder.appendChild(particle);
 
-      const dist = 20 + rrange(-5, 5); // Increased distance
+      const dist = 20 + rrange(-5, 5);
       const particleAnim = particle.animate(
         [
           { opacity: 0, transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(0) scale(0.8)` },
@@ -668,7 +679,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
           { opacity: 0.45, transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-${dist}vmin) scale(0.9)`, offset: 0.8 },
           { opacity: 0, transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-${dist * 1.2}vmin) scale(0.7)` }
         ],
-        { duration: nDur(850 + rrange(-120, 120), 0.15), delay: nDelay(60 + (p % 5) * 25, 0.25), easing: EZ_OUT, fill: "forwards" }
+        { duration: nDur(620 + rrange(-90, 90), 0.15), delay: nDelay(45 + (p % 5) * 18, 0.25), easing: EZ_OUT, fill: "forwards" } // Reduced durations and delays
       );
       trackAnim(particleAnim);
     }
@@ -677,7 +688,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
       const t = window.setTimeout(() => {
         if (explosionContainer.parentNode) explosionContainer.parentNode.removeChild(explosionContainer);
         resolve(undefined);
-      }, 1300);
+      }, 950); // Reduced from 1300
       trackTimer(t);
     });
   }
@@ -750,7 +761,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
 
     const aura = auraRef.current!;
     const a3 = aura.animate([{ opacity: 0.2 }, { opacity: 0.28 }],
-      { duration: nDur(380, 0.1), fill: "forwards", easing: EZ_NATURAL });
+      { duration: nDur(280, 0.1), fill: "forwards", easing: EZ_NATURAL }); // Reduced from 380
     trackAnim(a3);
 
     await Promise.all([
@@ -769,7 +780,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
 
     const auraDown = aura.animate(
       [{ opacity: 0.28 }, { opacity: 0.15 }],
-      { duration: nDur(150, 0.05), fill: "forwards", easing: EZ_NATURAL }
+      { duration: nDur(120, 0.05), fill: "forwards", easing: EZ_NATURAL } // Reduced from 150
     );
     trackAnim(auraDown);
 
@@ -841,7 +852,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
     const energyWave = document.createElement('div');
     energyWave.className = [
       "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
-      "pointer-events-none aspect-square h-[60vmin]", // Increased size
+      "pointer-events-none aspect-square h-[60vmin]",
       "bg-[radial-gradient(circle_at_50%_50%,rgba(0,234,255,0.3)_0%,rgba(0,234,255,0.15)_40%,rgba(0,234,255,0.06)_70%,transparent_100%)]",
       "rounded-full will-change-transform transform-gpu"
     ].join(" ");
@@ -854,21 +865,21 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
         { opacity: 0.45, transform: 'translate(-50%, -50%) scale(2.4) rotate(90deg)', offset: 0.75 },
         { opacity: 0, transform: 'translate(-50%, -50%) scale(3.8) rotate(150deg)' }
       ],
-      { duration: nDur(1000, 0.1), easing: EZ_NATURAL, fill: 'forwards' }
+      { duration: nDur(720, 0.1), easing: EZ_NATURAL, fill: 'forwards' } // Reduced from 1000
     );
     trackAnim(waveAnimation);
 
-    for (let i = 0; i < 10; i++) { // Increased count
+    for (let i = 0; i < 10; i++) {
       const base = i * 36;
       const angle = base + rrange(-10, 10);
       const flow = document.createElement('div');
-      const length = 35 + rrange(-7, 7); // Increased variation
-      const width = 2 + rrange(-0.4, 0.4); // Increased width
+      const length = 35 + rrange(-7, 7);
+      const width = 2 + rrange(-0.4, 0.4);
       flow.className = [
         "absolute left-1/2 top-1/2 -translate-x-1/2 origin-top pointer-events-none",
         `h-[${length}vh] w-[${width}px]`,
         "bg-[linear-gradient(to_bottom,rgba(0,234,255,0.95)_0%,rgba(0,234,255,0.5)_60%,transparent_100%)]",
-        "shadow-[0_0_8px_rgba(0,234,255,0.6)]", // Enhanced shadow
+        "shadow-[0_0_8px_rgba(0,234,255,0.6)]",
         `rotate-[${angle}deg]`,
         "rounded-full will-change-transform transform-gpu"
       ].join(" ");
@@ -881,14 +892,14 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
           { opacity: 0.55, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.15) scaleX(0.8)`, offset: 0.75 },
           { opacity: 0, transform: `translate(-50%, 0) rotate(${angle}deg) scaleY(1.5) scaleX(0.6)` }
         ],
-        { duration: nDur(800 + rrange(-60, 60), 0.12), delay: nDelay((i % 5) * 30, 0.2), easing: EZ_NATURAL, fill: 'forwards' }
+        { duration: nDur(580 + rrange(-45, 45), 0.12), delay: nDelay((i % 5) * 22, 0.2), easing: EZ_NATURAL, fill: 'forwards' } // Reduced durations and delays
       );
       trackAnim(flowAnimation);
     }
 
     const t = window.setTimeout(() => {
       if (burstContainer.parentNode) burstContainer.parentNode.removeChild(burstContainer);
-    }, 1500);
+    }, 1100); // Reduced from 1500
     trackTimer(t);
   }
 
@@ -930,12 +941,12 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
 
     await new Promise(r => { const t = setTimeout(r, spd(T.startDelay)); trackTimer(t as unknown as number); });
     await startSpreadAnimation();
-    await new Promise(r => { const t = setTimeout(r, spd(150)); trackTimer(t as unknown as number); });
+    await new Promise(r => { const t = setTimeout(r, spd(100)); trackTimer(t as unknown as number); }); // Reduced from 150
     await startHexGlowSequence();
     await new Promise(r => { const t = setTimeout(r, spd(T.afterAllGlow)); trackTimer(t as unknown as number); });
     await new Promise(r => { const t = setTimeout(r, spd(T.beforeWooshBlue)); trackTimer(t as unknown as number); });
     await switchThemeToBlueWoosh();
-    await new Promise(r => { const t = setTimeout(r, 200); trackTimer(t as unknown as number); });
+    await new Promise(r => { const t = setTimeout(r, 140); trackTimer(t as unknown as number); }); // Reduced from 200
     await blueBoom();
 
     setExiting(true);
@@ -946,7 +957,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
         { opacity: 0.75, transform: "scale(0.985)" },
         { opacity: 0, transform: "scale(0.96)" }
       ],
-      { duration: nDur(1100, 0.06), easing: EZ_OUT, fill: "forwards" }
+      { duration: nDur(800, 0.06), easing: EZ_OUT, fill: "forwards" } // Reduced from 1100
     );
     trackAnim(fadeOut);
     await new Promise(res => fadeOut.addEventListener("finish", () => res(undefined)));
@@ -962,7 +973,7 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
       clearAllAsync();
       runOnce();
       restartLoopIfNeeded();
-    }, TOTAL_LOADING_TIME + 1500);
+    }, TOTAL_LOADING_TIME + 1000); // Reduced from 1500
     trackTimer(t);
   }
 
@@ -977,8 +988,11 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
   return (
     <div
       ref={rootRef}
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-visible bg--blue ${exiting ? "pointer-events-none" : ""}`}
-      style={rootVars}
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center overflow-hidden ${exiting ? "pointer-events-none" : ""}`}
+      style={{
+        ...rootVars,
+        backgroundColor: 'rgb(0, 85, 156)'
+      }}
       aria-hidden={exiting}
       aria-label="Loading"
     >
@@ -995,7 +1009,8 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
           ref={svgRef}
           viewBox="-300 -300 600 600"
           aria-label="Loading Animation"
-          className="w-[min(80vw,80vh)] h-[min(80vw,80vh)] max-w-[600px] max-h-[600px] min-w-[320px] min-h-[320px] z-10"
+          className="w-full h-full absolute inset-0 z-10"
+          preserveAspectRatio="xMidYMid meet"
           shapeRendering="geometricPrecision"
           style={{ 
             textRendering: "geometricPrecision",
@@ -1031,4 +1046,4 @@ const LoadingScreen: React.FC<{ onFinish?: () => void }> = ({ onFinish }) => {
   );
 };
 
-export default LoadingScreen
+export default LoadingScreen;

@@ -83,11 +83,10 @@ const Contact: React.FC = () => {
                   <RevealWrapper animation="slideUp" delay={700} triggerOnce={false} threshold={0.25}>
                     <a
                       href="mailto:hartonodeliko@gmail.com"
-                      className="inline-flex items-center gap-3 px-6 py-3 rounded-xl font-medium bg-primary text-primary-foreground transition-transform duration-200 hover:scale-105"
+                      className="inline-flex items-center mb-12 gap-1 px-6 py-2 rounded-xl font-medium bg-primary text-primary-foreground transition-transform duration-200 hover:scale-105"
                     >
                       <Mail className="w-4 h-4" />
-                      <span>Get In Touch</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <span >Get In Touch</span>
                     </a>
                   </RevealWrapper>
 

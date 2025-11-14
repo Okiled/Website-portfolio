@@ -5,24 +5,19 @@ type NamedGlow =
   | 'primary' | 'secondary' | 'font';
 
 interface UseGlowEffectOptions {
-  // tetap dukung preset lama + token warna brand
   glowColor?: NamedGlow;
 }
 
 const glowColorMap: Record<NamedGlow, { base: number; spread: number }> = {
-  // preset lama
   blue:   { base: 220, spread: 200 },
   purple: { base: 280, spread: 300 },
   green:  { base: 120, spread: 200 },
   red:    { base:   0, spread: 200 },
   orange: { base:  30, spread: 200 },
 
-  // token palet kamu
-  // #152046  ≈ H 226°
+
   primary:   { base: 226, spread:  60 },
-  // #96a4d3  ≈ H 226° (lebih cerah → spread lebih besar biar "hidup")
   secondary: { base: 226, spread: 120 },
-  // #aa8f76  ≈ H 29°
   font:      { base:  29, spread:  40 },
 };
 

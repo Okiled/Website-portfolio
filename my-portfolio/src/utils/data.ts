@@ -11,16 +11,12 @@ const techIconMapping: Record<string, string> = {
   'JavaScript': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/javascript/javascript-original.svg',
   'TypeScript': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/typescript/typescript-original.svg',
   'Java': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/java/java-original.svg',
-  'C++': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/cplusplus/cplusplus-original.svg',
   'HTML5': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/html5/html5-original.svg',
   'CSS3': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/css3/css3-original.svg',
   
   // Frontend Frameworks
   'React': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/react/react-original.svg',
   'React.js': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/react/react-original.svg',
-  'React Native': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/react/react-original.svg',
-  'Vue.js': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/vuejs/vuejs-original.svg',
-  'Flutter': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/flutter/flutter-original.svg',
   'Tailwind CSS': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/tailwindcss/tailwindcss-original.svg',
   'Framer Motion': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/framermotion/framermotion-original.svg',
   'Three.js': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/threejs/threejs-original.svg',
@@ -44,13 +40,9 @@ const techIconMapping: Record<string, string> = {
   // Databases
   'MongoDB': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/mongodb/mongodb-original.svg',
   'MySQL': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/mysql/mysql-original.svg',
-  'PostgreSQL': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/postgresql/postgresql-original.svg',
   
   // Tools & DevOps
   'Git': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/git/git-original.svg',
-  'Docker': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/docker/docker-original.svg',
-  'Anaconda': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/anaconda/anaconda-original.svg',
-  'Android Studio': 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/androidstudio/androidstudio-original.svg',
 };
 
 export const socialLinks: SocialLink[] = [
@@ -126,7 +118,7 @@ export const skills: Skill[] = [
   {
     icon: Code,
     title: "Programming Languages",
-    skills: ['Python', 'JavaScript', 'TypeScript', 'Java', 'C++'],
+    skills: ['Python', 'JavaScript', 'TypeScript', 'Java'],
     color: "cyan",
     description: "Developing applications using various programming languages for web, backend, and automation purposes."
   },
@@ -140,7 +132,7 @@ export const skills: Skill[] = [
   {
     icon: Smartphone,
     title: "Mobile Development",
-    skills: ['React Native', 'Flutter', 'Android Studio'],
+    skills: ['Android Studio'],
     color: "pink",
     description: "Creating cross-platform mobile applications using React Native and Flutter."
   },
@@ -154,7 +146,7 @@ export const skills: Skill[] = [
   {
     icon: Database,
     title: "Database & Backend",
-    skills: ['MongoDB', 'MySQL', 'PostgreSQL', 'Git', 'Docker'],
+    skills: ['MongoDB', 'MySQL','Git'],
     color: "purple",
     description: "Managing data storage, backend APIs, deployment, and DevOps workflows."
   },

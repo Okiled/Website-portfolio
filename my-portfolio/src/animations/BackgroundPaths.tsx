@@ -10,7 +10,7 @@ const FloatingPaths = memo(function FloatingPaths({
 }: {
   position: number;
   count?: number;
-  yOffset?: number; // +n untuk geser naik (opsional)
+  yOffset?: number;
 }) {
   const paths = useMemo(
     () =>
@@ -33,62 +33,41 @@ const FloatingPaths = memo(function FloatingPaths({
     [count, position]
   );
 
+  const content = paths.map((p) => (
+    <motion.path
+      key={p.id}
+      d={p.d}
+      stroke="currentColor"
+      strokeWidth={p.width}
+      strokeOpacity={p.opacity}
+      initial={{ pathLength: 0.3, opacity: 0.6 }}
+      animate={{
+        pathLength: 1,
+        opacity: [0.3, 0.6, 0.3],
+        pathOffset: [0, 1, 0],
+      }}
+      transition={{
+        duration: 20 + Math.random() * 10,
+        repeat: Number.POSITIVE_INFINITY,
+        ease: "linear",
+      }}
+    />
+  ));
+
   return (
-    <div className="absolute inset-0 pointer-events-none">
-      <svg
-        className="w-full h-full"
-        viewBox="0 0 696 316"
-        fill="none"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        {yOffset !== 0 ? (
-          <g transform={`translate(0, ${-Math.abs(yOffset)})`}>
-            {paths.map((p) => (
-              <motion.path
-                key={p.id}
-                d={p.d}
-                stroke="currentColor"
-                strokeWidth={p.width}
-                strokeOpacity={p.opacity}
-                initial={{ pathLength: 0.3, opacity: 0.6 }}
-                animate={{
-                  pathLength: 1,
-                  opacity: [0.3, 0.6, 0.3],
-                  pathOffset: [0, 1, 0],
-                }}
-                transition={{
-                  duration: 20 + Math.random() * 10,
-                  repeat: Number.POSITIVE_INFINITY,
-                  ease: "linear",
-                }}
-              />
-            ))}
-          </g>
-        ) : (
-          paths.map((p) => (
-            <motion.path
-              key={p.id}
-              d={p.d}
-              stroke="currentColor"
-              strokeWidth={p.width}
-              strokeOpacity={p.opacity}
-              initial={{ pathLength: 0.3, opacity: 0.6 }}
-              animate={{
-                pathLength: 1,
-                opacity: [0.3, 0.6, 0.3],
-                pathOffset: [0, 1, 0],
-              }}
-              transition={{
-                duration: 20 + Math.random() * 10,
-                repeat: Number.POSITIVE_INFINITY,
-                ease: "linear",
-              }}
-            />
-          ))
-        )}
-      </svg>
-    </div>
+    <svg
+      className="w-full h-full"
+      viewBox="0 0 696 316"
+      fill="none"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      {yOffset !== 0 ? (
+        <g transform={`translate(0, ${-Math.abs(yOffset)})`}>{content}</g>
+      ) : (
+        content
+      )}
+    </svg>
   );
 });
 
@@ -103,13 +82,10 @@ export default function BackgroundPaths({
 }) {
   return (
     <div
-      className={`relative min-h-screen w-full overflow-hidden bg-bg ${className}`}
+      className={`absolute inset-0 overflow-hidden text-brand pointer-events-none ${className}`}
     >
-      <div className="absolute inset-0 text-brand">
-        <FloatingPaths position={1} yOffset={yOffset} count={count} />
-        <FloatingPaths position={-1} yOffset={yOffset} count={count} />
-      </div>
+      <FloatingPaths position={1} yOffset={yOffset} count={count} />
+      <FloatingPaths position={-1} yOffset={yOffset} count={count} />
     </div>
   );
 }
-  

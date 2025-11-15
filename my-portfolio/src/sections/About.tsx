@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { BookOpen, Star, User, GraduationCap, Code2 } from "lucide-react";
+import { User, GraduationCap, Code2 } from "lucide-react";
 import { useGlowEffect as useGlowEffectHook } from "@/components/GlowEffect";
 import TextJalan from "@/animations/TextJalan";
 
@@ -13,7 +13,7 @@ const ProfileBadge = memo(() => (
 ));
 ProfileBadge.displayName = "ProfileBadge";
 
-const IntroductionCard = memo(
+const AboutEducationCard = memo(
   React.forwardRef<HTMLDivElement, { glowProps: any }>(({ glowProps }, ref) => (
     <div ref={ref} {...glowProps} className="rounded-3xl">
       <div className="glow-spots" />
@@ -24,58 +24,47 @@ const IntroductionCard = memo(
             About Me
           </h3>
         </div>
-        <p className="text-base sm:text-lg lg:text-xl text-muted-foreground leading-relaxed">
-          Information Technology student specializing in{" "}
-          <span className="text-foreground font-semibold">machine learning</span>{" "}
-          and{" "}
-          <span className="text-foreground font-semibold">full-stack development</span>.
-          Hands-on experience building{" "}
-          <span className="text-foreground font-semibold">
-            AI-driven trading systems
-          </span>{" "}
-          (LSTM, PPO, Black–Litterman optimization) and contributing to{" "}
-          <span className="text-foreground font-semibold">
-            secure fintech marketplace platforms
-          </span>{" "}
-          (JWT/RBAC, Midtrans integration, real-time features) in professional Agile
-          environments. Focused on delivering{" "}
-          <span className="text-foreground font-semibold">reliable, well-documented</span>{" "}
-          solutions with{" "}
-          <span className="text-foreground font-semibold">measurable impact</span> that meet
-          current industry standards.
-        </p>
-      </div>
-    </div>
-  ))
-);
-IntroductionCard.displayName = "IntroductionCard";
 
-const Web3JourneyCard = memo(
-  React.forwardRef<HTMLDivElement, { glowProps: any }>(({ glowProps }, ref) => (
-    <div ref={ref} {...glowProps} className="rounded-3xl">
-      <div className="glow-spots" />
-      <div className="relative z-10 rounded-3xl p-6 sm:p-8 lg:p-10 bg-card border border-border shadow-[inset_0_1px_0_hsl(var(--foreground)/0.04)]">
-        <div className="flex items-center gap-4 sm:gap-5 mb-5 sm:mb-7">
-          <Code2 className="w-6 h-6 sm:w-7 sm:h-7 text-foreground flex-shrink-0" />
-          <h3 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
-            Web3 Journey
-          </h3>
+        <p className="text-base sm:text-lg lg:text-xl text-muted-foreground leading-relaxed mb-2">
+          👋 I&apos;m Deliko, a{" "}
+          <span className="font-semibold text-foreground">
+            Computer Science undergraduate specializing in Software Engineering
+          </span>{" "}
+          at BINUS University and a{" "}
+          <span className="font-semibold text-foreground">full-stack ML engineer</span> in
+          training.
+        </p>
+
+        <p className="text-base sm:text-lg lg:text-xl text-muted-foreground leading-relaxed mb-6">
+          I build{" "}
+          <span className="font-semibold text-foreground">AI trading systems</span> with LSTM,
+          PPO, and Black–Litterman, plus{" "}
+          <span className="font-semibold text-foreground">
+            secure, scalable web and API services
+          </span>{" "}
+          with real-time features, clear docs, and strong tests. I use{" "}
+          <span className="font-semibold text-foreground">LLMs every day</span> to speed
+          development and sharpen reviews.
+        </p>
+
+
+        <div className="flex items-center gap-3 text-sm sm:text-base text-muted-foreground">
+          <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-foreground flex-shrink-0" />
+          <p className="font-medium text-foreground">
+            BINUS University · Computer Science (Software Engineering) · Aug 2023 – Present
+          </p>
         </div>
-
-        <p className="text-base sm:text-lg lg:text-xl text-muted-foreground leading-relaxed">
-          Active in the Web3 ecosystem since 2022, I have extensive experience in blockchain technologies, DeFi protocols, and cryptocurrency trading algorithms. I'm particularly interested in applying AI to financial markets and building decentralized applications.
-        </p>
       </div>
     </div>
   ))
 );
-Web3JourneyCard.displayName = "Web3JourneyCard";
+AboutEducationCard.displayName = "AboutEducationCard";
 
 const FocusImpactCard = memo(
   React.forwardRef<HTMLDivElement, { glowProps: any }>(({ glowProps }, ref) => (
-    <div ref={ref} {...glowProps} className="rounded-3xl">
+    <div ref={ref} {...glowProps} className="rounded-3xl h-full">
       <div className="glow-spots" />
-      <div className="relative z-10 rounded-3xl p-6 sm:p-8 lg:p-10 bg-card border border-border shadow-[inset_0_1px_0_hsl(var(--foreground)/0.04)]">
+      <div className="relative z-10 h-full rounded-3xl p-6 sm:p-8 lg:p-10 bg-card border border-border shadow-[inset_0_1px_0_hsl(var(--foreground)/0.04)] flex flex-col">
         <div className="flex items-center gap-4 sm:gap-5 mb-5 sm:mb-7">
           <Code2 className="w-6 h-6 sm:w-7 sm:h-7 text-foreground flex-shrink-0" />
           <h3 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
@@ -84,28 +73,38 @@ const FocusImpactCard = memo(
         </div>
 
         <p className="text-base sm:text-lg lg:text-xl text-muted-foreground leading-relaxed mb-6">
-          Committed to building solutions that combine technical excellence with real-world impact. My work focuses on:
+          I care about solutions that combine technical depth with real-world impact. A
+          few areas I&apos;m actively working on:
         </p>
 
         <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-secondary border border-border">
-            <h4 className="text-lg font-semibold text-foreground mb-2">AI & Machine Learning</h4>
+          <div className="pl-4 border-l border-border">
+            <h4 className="text-lg font-semibold text-foreground mb-1.5">
+              AI & Machine Learning
+            </h4>
             <p className="text-sm text-muted-foreground">
-              Developing intelligent systems for financial analysis, trading strategies, and predictive modeling using modern ML frameworks.
+              Designing trading and forecasting systems with modern ML frameworks and
+              clear evaluation metrics.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-secondary border border-border">
-            <h4 className="text-lg font-semibold text-foreground mb-2">Full-Stack Development</h4>
+          <div className="pl-4 border-l border-border">
+            <h4 className="text-lg font-semibold text-foreground mb-1.5">
+              Full-Stack Engineering
+            </h4>
             <p className="text-sm text-muted-foreground">
-              Building secure, scalable applications with focus on user experience, performance optimization, and clean architecture.
+              Building secure, scalable backends and UIs with a focus on performance,
+              clean architecture, and developer ergonomics.
             </p>
           </div>
 
-          <div className="p-4 rounded-xl bg-secondary border border-border">
-            <h4 className="text-lg font-semibold text-foreground mb-2">Web3 & Blockchain</h4>
+          <div className="pl-4 border-l border-border">
+            <h4 className="text-lg font-semibold text-foreground mb-1.5">
+              Web3 & Infrastructure
+            </h4>
             <p className="text-sm text-muted-foreground">
-              Exploring decentralized technologies, smart contracts, and the intersection of AI with blockchain ecosystems.
+              Exploring how decentralized tech, smart contracts, and AI can work
+              together in real products.
             </p>
           </div>
         </div>
@@ -115,52 +114,29 @@ const FocusImpactCard = memo(
 );
 FocusImpactCard.displayName = "FocusImpactCard";
 
-const EducationCard = memo(
+const Web3JourneyCard = memo(
   React.forwardRef<HTMLDivElement, { glowProps: any }>(({ glowProps }, ref) => (
-    <div ref={ref} {...glowProps} className="rounded-3xl">
+    <div ref={ref} {...glowProps} className="rounded-3xl h-full">
       <div className="glow-spots" />
-      <div className="relative z-10 rounded-3xl p-6 sm:p-8 lg:p-10 bg-card border border-border shadow-[inset_0_1px_0_hsl(var(--foreground)/0.04)]">
-        <div className="flex items-center gap-4 sm:gap-5 mb-6 sm:mb-8">
-          <BookOpen className="w-6 h-6 sm:w-7 sm:h-7 text-foreground flex-shrink-0" />
+      <div className="relative z-10 h-full rounded-3xl p-6 sm:p-8 lg:p-10 bg-card border border-border shadow-[inset_0_1px_0_hsl(var(--foreground)/0.04)] flex flex-col">
+        <div className="flex items-center gap-4 sm:gap-5 mb-5 sm:mb-7">
+          <Code2 className="w-6 h-6 sm:w-7 sm:h-7 text-foreground flex-shrink-0" />
           <h3 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
-            Education
+            Web3 Journey
           </h3>
         </div>
-
-        <div className="space-y-7 sm:space-y-9">
-          <div className="p-5 sm:p-6 rounded-2xl border border-border bg-secondary">
-            <div className="flex items-start gap-4 sm:gap-5 mb-5">
-              <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6 text-foreground flex-shrink-0 mt-0.5" />
-              <div className="min-w-0 flex-1">
-                <h4 className="text-lg sm:text-xl lg:text-2xl font-semibold text-foreground">
-                  Binus University
-                </h4>
-                <p className="text-muted-foreground text-sm sm:text-base">
-                  Bachelor's in Information Technology
-                </p>
-                <p className="text-muted-foreground text-xs sm:text-sm">
-                  Aug 2023 – Present
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 sm:gap-4">
-              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
-              <span className="text-foreground text-sm sm:text-base">
-                GPA: 3.07 / 4.0
-              </span>
-            </div>
-          </div>
-
-          <div className="text-center p-4 sm:p-5 rounded-2xl border border-border bg-secondary">
-            <div className="text-2xl sm:text-3xl font-extrabold text-foreground">5th Semester</div>
-            <div className="text-xs sm:text-sm text-muted-foreground mt-1">Currently Enrolled</div>
-          </div>
-        </div>
+        <p className="text-base sm:text-lg lg:text-xl text-muted-foreground leading-relaxed">
+          I&apos;ve been active in the Web3 ecosystem since 2022, experimenting with
+          blockchain infrastructure, DeFi protocols, and crypto trading systems. I&apos;m
+          especially interested in how{" "}
+          <span className="font-semibold text-foreground">AI-driven tooling</span> can
+          make on-chain products safer, faster, and easier to use.
+        </p>
       </div>
     </div>
   ))
 );
-EducationCard.displayName = "EducationCard";
+Web3JourneyCard.displayName = "Web3JourneyCard";
 
 const QuoteBadge = memo(() => (
   <div className="text-center mt-12 sm:mt-16">
@@ -183,13 +159,13 @@ const BackgroundLayers = memo(() => (
 BackgroundLayers.displayName = "BackgroundLayers";
 
 const About: React.FC = () => {
-  const { ref: glow1Ref, glowProps: glow1Props, glowCSS } = useGlowEffectHook({
+  const { ref: glowMainRef, glowProps: glowMainProps, glowCSS } = useGlowEffectHook({
     glowColor: "blue",
   });
-  const { ref: glow2Ref, glowProps: glow2Props } = useGlowEffectHook({
+  const { ref: glowFocusRef, glowProps: glowFocusProps } = useGlowEffectHook({
     glowColor: "blue",
   });
-  const { ref: glow3Ref, glowProps: glow3Props } = useGlowEffectHook({
+  const { ref: glowWeb3Ref, glowProps: glowWeb3Props } = useGlowEffectHook({
     glowColor: "blue",
   });
 
@@ -207,14 +183,12 @@ const About: React.FC = () => {
           <ProfileBadge />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10 lg:gap-12">
-          <div className="space-y-6 sm:space-y-10 lg:space-y-12">
-            <IntroductionCard ref={glow1Ref} glowProps={glow1Props} />
-            <EducationCard ref={glow2Ref} glowProps={glow2Props} />
-          </div>
+        <div className="max-w-6xl mx-auto space-y-8 sm:space-y-10 lg:space-y-12">
+          <AboutEducationCard ref={glowMainRef} glowProps={glowMainProps} />
 
-          <div>
-            <FocusImpactCard ref={glow3Ref} glowProps={glow3Props} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-stretch">
+            <FocusImpactCard ref={glowFocusRef} glowProps={glowFocusProps} />
+            <Web3JourneyCard ref={glowWeb3Ref} glowProps={glowWeb3Props} />
           </div>
         </div>
 

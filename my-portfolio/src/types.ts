@@ -25,6 +25,7 @@ export interface Project {
   demo: string;
   tech: string[];
   color: 'cyan' | 'purple' | 'pink';
+  image?: string;   // <—— tambah hanya ini
 }
 
 export interface Skill {
@@ -52,7 +53,6 @@ export interface MousePosition {
 
 export type ColorVariant = 'cyan' | 'purple' | 'pink';
 
-// Additional interfaces for project details
 export interface ProjectLinks {
   github: string;
   githubApi?: string;
